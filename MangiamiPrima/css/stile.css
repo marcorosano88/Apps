@@ -1,0 +1,222 @@
+/* Mangiami Prima - stile. Colori ripresi da Resources/Styles/Colors.xaml dell'app MAUI. */
+:root {
+  --primary: #512BD4;
+  --primary-text: #ffffff;      /* testo sui bottoni primari */
+  --secondary: #DFD8F7;
+  --accent: #512BD4;            /* testi/bordi evidenziati */
+  --bg: #ffffff;
+  --surface: #f6f4fd;
+  --bar: #ffffff;
+  --bar-text: #000000;
+  --text: #000000;
+  --text-soft: #6E6E6E;
+  --line: #e1e1e1;
+  --field-bg: #ffffff;
+  --btn-sec-bg: #C8C8C8;        /* Gray200 */
+  --btn-sec-text: #141414;
+  --scaduto: #C62828;
+  --in-scadenza: #E65100;
+  --ok: #2e7d32;
+  --ombra: 0 1px 3px rgba(0, 0, 0, .15);
+  --raggio: 12px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="chiaro"]) {
+    --primary: #ac99ea;
+    --primary-text: #242424;
+    --secondary: #2B0B98;
+    --accent: #ac99ea;
+    --bg: #141414;
+    --surface: #212121;
+    --bar: #1f1f1f;
+    --bar-text: #9880e5;
+    --text: #ffffff;
+    --text-soft: #ACACAC;
+    --line: #404040;
+    --field-bg: #212121;
+    --btn-sec-bg: #404040;
+    --btn-sec-text: #E1E1E1;
+    --scaduto: #ef6b6b;
+    --in-scadenza: #ff9a55;
+    --ok: #7fd18a;
+    --ombra: none;
+    color-scheme: dark;
+  }
+}
+:root[data-tema="scuro"] {
+  --primary: #ac99ea; --primary-text: #242424; --secondary: #2B0B98; --accent: #ac99ea;
+  --bg: #141414; --surface: #212121; --bar: #1f1f1f; --bar-text: #9880e5; --text: #ffffff;
+  --text-soft: #ACACAC; --line: #404040; --field-bg: #212121; --btn-sec-bg: #404040; --btn-sec-text: #E1E1E1;
+  --scaduto: #ef6b6b; --in-scadenza: #ff9a55; --ok: #7fd18a; --ombra: none; color-scheme: dark;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh; min-height: 100dvh;
+  overscroll-behavior-y: none;
+}
+
+/* ---------- Barra superiore (rispetta notch / status bar iOS) ---------- */
+.barra {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 4px;
+  background: var(--bar); color: var(--bar-text);
+  padding: calc(env(safe-area-inset-top) + 6px) calc(env(safe-area-inset-right) + 12px) 8px calc(env(safe-area-inset-left) + 12px);
+  min-height: calc(env(safe-area-inset-top) + 52px);
+  border-bottom: 1px solid var(--line);
+}
+.barra h1 { flex: 1; margin: 0; font-size: 18px; letter-spacing: .5px; text-align: center; }
+.indietro {
+  position: absolute; left: calc(env(safe-area-inset-left) + 4px); bottom: 2px;
+  width: 44px; height: 44px; border: 0; background: none; color: inherit;
+  font-size: 34px; line-height: 1; cursor: pointer;
+}
+.indietro[hidden] { display: none; }
+
+main {
+  padding: 20px calc(env(safe-area-inset-right) + 20px) calc(env(safe-area-inset-bottom) + 28px) calc(env(safe-area-inset-left) + 20px);
+  max-width: 640px; margin: 0 auto; outline: none;
+}
+main > * + * { margin-top: 15px; }
+h2 { font-size: 20px; margin: 0; }
+p { margin: 0; }
+.soft { color: var(--text-soft); }
+.centro { text-align: center; }
+.vuoto { text-align: center; color: var(--text-soft); padding: 28px 12px; }
+
+/* ---------- Bottoni ---------- */
+button, .btn {
+  font: inherit; cursor: pointer; border: 0; border-radius: 8px;
+  background: var(--primary); color: var(--primary-text);
+  padding: 10px 14px; min-height: 44px; touch-action: manipulation;
+}
+button:active { filter: brightness(.9); }
+button:disabled { opacity: .4; cursor: default; }
+.grande { width: 100%; min-height: 60px; border-radius: 30px; font-size: 20px; font-weight: 700; }
+.medio { min-height: 55px; border-radius: 28px; font-size: 18px; font-weight: 700; width: 100%; }
+.pillola { border-radius: 22px; font-weight: 700; font-size: 14px; }
+.sec { background: var(--btn-sec-bg); color: var(--btn-sec-text); }
+.quadrato { width: 48px; padding: 0; font-size: 20px; flex: none; }
+.piccolo { width: 36px; min-height: 36px; padding: 0; font-weight: 700; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 2px;
+}
+
+/* ---------- Campi ---------- */
+label.etichetta { display: block; font-weight: 700; margin-bottom: 6px; }
+input, select, textarea {
+  font: inherit; font-size: 16px; /* >=16px evita lo zoom automatico di Safari */
+  width: 100%; min-height: 44px; padding: 10px 12px;
+  color: var(--text); background: var(--field-bg);
+  border: 1px solid var(--line); border-radius: 8px;
+  -webkit-appearance: none; appearance: none;
+}
+input[type="date"], input[type="time"] { min-height: 44px; }
+select {
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-soft) 50%), linear-gradient(135deg, var(--text-soft) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+  background-size: 6px 6px; background-repeat: no-repeat; padding-right: 32px;
+}
+textarea { resize: vertical; min-height: 100px; }
+::placeholder { color: var(--text-soft); opacity: .8; }
+.riga { display: flex; gap: 10px; align-items: center; }
+.riga > input, .riga > select { flex: 1; min-width: 0; }
+.separatore { height: 1px; background: var(--line); border: 0; margin: 20px 0; }
+
+/* ---------- Home ---------- */
+.home { display: grid; gap: 22px; padding-top: 6px; }
+
+.banner {
+  border-radius: var(--raggio); padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--in-scadenza); box-shadow: var(--ombra);
+}
+.banner.rosso { border-color: var(--scaduto); }
+.banner h3 { margin: 0 0 6px; font-size: 16px; color: var(--in-scadenza); }
+.banner.rosso h3 { color: var(--scaduto); }
+.banner ul { margin: 0; padding-left: 18px; }
+.banner li { margin: 2px 0; }
+.banner .azioni { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+.nota { border: 1px dashed var(--line); border-radius: var(--raggio); padding: 10px 12px; font-size: 14px; color: var(--text-soft); }
+
+/* ---------- Dispensa ---------- */
+.testata {
+  display: grid; grid-template-columns: 84px 1fr 92px; padding: 8px 10px;
+  background: var(--primary); color: var(--primary-text); font-weight: 700; border-radius: 8px 8px 0 0;
+}
+.prodotto {
+  position: relative; display: grid; grid-template-columns: 84px 1fr 92px; align-items: center;
+  padding: 8px 10px; border-bottom: 1px solid var(--line);
+}
+.prodotto .barra-scad { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: transparent; }
+.prodotto.scaduto .barra-scad { background: var(--scaduto); }
+.prodotto.in-scadenza .barra-scad { background: var(--in-scadenza); }
+.qta { text-align: center; }
+.qta .num { font-weight: 700; margin-bottom: 4px; }
+.qta .bottoni { display: flex; gap: 4px; justify-content: center; }
+.nome { display: flex; align-items: center; gap: 8px; padding: 0 6px; min-width: 0; overflow-wrap: anywhere; }
+.nome img { width: 48px; height: 48px; object-fit: contain; flex: none; border-radius: 4px; background: #fff; }
+.scad { font-size: 14px; }
+.scad .testo { font-size: 11px; font-weight: 700; margin-top: 2px; }
+.scaduto .testo { color: var(--scaduto); }
+.in-scadenza .testo { color: var(--in-scadenza); }
+
+/* ---------- Idee / ricette ---------- */
+.ricetta {
+  border: 1px solid var(--accent); border-radius: var(--raggio); padding: 15px; background: var(--bg);
+  display: grid; gap: 8px;
+}
+.ricetta h3 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+.ricetta .compat { color: var(--accent); }
+.ricetta .scad-ing { color: var(--in-scadenza); font-weight: 700; white-space: pre-line; }
+.ricetta .procedimento { white-space: pre-line; overflow-wrap: anywhere; }
+.ricetta .corsivo { font-style: italic; }
+.messaggio { text-align: center; }
+.messaggio.errore { color: var(--scaduto); }
+.chip {
+  display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px;
+  background: var(--secondary); color: var(--text);
+}
+
+/* ---------- Lista della spesa ---------- */
+.elemento { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.elemento .testo { overflow-wrap: anywhere; }
+.elemento.fatto .testo { text-decoration: line-through; opacity: .5; }
+
+/* ---------- Impostazioni ---------- */
+.stepper { display: flex; align-items: center; gap: 10px; }
+.stepper output { min-width: 28px; text-align: center; font-weight: 700; }
+.impostazioni { display: grid; gap: 15px; }
+.copyright { text-align: center; font-style: italic; margin-top: 24px; color: var(--text-soft); }
+.stato-notifiche { font-size: 14px; }
+
+/* ---------- Spinner, scanner, dialogo ---------- */
+.spinner { width: 28px; height: 28px; margin: 0 auto; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: gira .8s linear infinite; }
+@keyframes gira { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+[hidden] { display: none !important; }
+
+.immagine-prodotto { display: block; margin: 0 auto; max-height: 150px; max-width: 100%; object-fit: contain; background: #fff; border-radius: 6px; }
+
+.scanner { position: fixed; inset: 0; z-index: 50; background: #000; color: #fff; display: flex; flex-direction: column; }
+.scanner video { flex: 1; width: 100%; min-height: 0; object-fit: cover; }
+.scanner .mirino {
+  position: absolute; left: 10%; right: 10%; top: 50%; height: 26%; transform: translateY(-50%);
+  border: 2px solid rgba(255, 255, 255, .85); border-radius: 12px; pointer-events: none;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .35);
+}
+.scanner .info { position: absolute; top: calc(env(safe-area-inset-top) + 14px); left: 0; right: 0; text-align: center; padding: 0 16px; text-shadow: 0 1px 3px #000; }
+.scanner .chiudi { margin: 14px 20px calc(env(safe-area-inset-bottom) + 14px); background: #fff; color: #000; min-height: 50px; border-radius: 25px; font-weight: 700; }
+
+dialog {
+  border: 0; border-radius: 14px; padding: 20px; width: min(92vw, 380px);
+  background: var(--bg); color: var(--text); box-shadow: 0 8px 30px rgba(0, 0, 0, .35);
+}
+dialog::backdrop { background: rgba(0, 0, 0, .5); }
+dialog h2 { font-size: 18px; margin-bottom: 8px; }
+dialog p { white-space: pre-line; overflow-wrap: anywhere; }
+.dialogo-bottoni { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+.dialogo-bottoni button { min-width: 80px; }

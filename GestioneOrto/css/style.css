@@ -83,6 +83,7 @@ button.row:active { background: var(--sf2); }
 .note { margin: 0; font-size: 14px; color: var(--mut); white-space: pre-line; }
 .note.warn { color: var(--warn); background: var(--warnbg); border-radius: 10px; padding: 8px 10px; }
 .note.small { font-size: 12.5px; }
+.copyright { text-align: center; font-size: 13px; color: var(--mut); opacity: .7; margin: 24px 0 12px; }
 .err { color: var(--danger); font-size: 14px; margin: 8px 0 0; }
 .pos { color: #2e7d32; } .neg { color: var(--danger); }
 :root[data-theme="dark"] .pos { color: #81c784; }

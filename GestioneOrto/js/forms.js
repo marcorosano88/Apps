@@ -737,6 +737,7 @@
       '• Schema: il disegno dell\'orto con solchi, verdure e oggetti.',
       '• Statistiche e spese: raccolti per anno e verdura, spese e valore stimato dei raccolti.',
     ].join('\n\n') })));
+    root.append(h('p', { class: 'copyright', text: '@Marco Rosano' }));
     return { title: 'Impostazioni', el: root };
   };
 })();

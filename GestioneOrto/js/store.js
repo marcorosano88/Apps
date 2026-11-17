@@ -386,6 +386,7 @@
         r = await fetch(`${cfg.url}/functions/v1/prezzi-orto?years=${anno}&products=${encodeURIComponent(prodotti)}`, { headers: { apikey: cfg.key }, signal: ctl.signal });
       } finally { clearTimeout(timer); }
       if (r.status === 429) return 'Servizio prezzi momentaneamente al limite delle richieste: riprova più tardi.';
+      if (r.status >= 500) return 'Il portale UE dei prezzi è temporaneamente non disponibile: riprova più tardi.';
       if (r.status !== 404 && !r.ok) return `Il servizio prezzi ha risposto ${r.status}.`;
       const nuovi = r.status === 404 ? [] : interpretaPrezzi(await r.json());
       S.db.prezzi = S.db.prezzi.filter((p) => L.parse(p.inizio).getFullYear() !== anno).concat(nuovi);

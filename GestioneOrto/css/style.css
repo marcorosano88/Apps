@@ -118,6 +118,9 @@ button.row:active { background: var(--sf2); }
 select.inp { background-image: linear-gradient(45deg, transparent 50%, var(--mut) 50%), linear-gradient(135deg, var(--mut) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 32px; }
 textarea.inp { resize: vertical; min-height: 76px; }
 .inp:focus { outline: 2px solid var(--ok); outline-offset: 0; }
+.fld.inl { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+.fld.inl .fld-l { flex: 1; font-size: 15px; color: var(--tx); }
+.fld.inl .inp { width: 84px; flex: none; text-align: center; }
 .fld.chk { flex-direction: row; align-items: center; gap: 10px; }
 .fld.chk input { width: 22px; height: 22px; accent-color: var(--pr); }
 .fld.switch { flex-direction: row-reverse; justify-content: space-between; align-items: center; background: var(--sf); border: 1px solid var(--bd); border-radius: 10px; padding: 9px 12px; }

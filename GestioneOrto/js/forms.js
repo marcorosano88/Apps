@@ -8,7 +8,7 @@
   const back = (p) => GO.nav.back(p);
   const ALTRA = 'Altra verdura…';
   const parseQuery = (q) => { const o = {}; new URLSearchParams(q || '').forEach((v, k) => (o[k] = v)); return o; };
-  GO.VERSION = '1.0.0';
+  GO.VERSION = '1.1.7'; // tenere uguale a VERSION in sw.js
 
   const bottoniForm = (annulla, salva, label) => h('div', { class: 'row-gap form-b' },
     h('button', { type: 'button', class: 'btn', onclick: annulla, text: 'Annulla' }),
@@ -660,6 +660,7 @@
     };
     const num = (label, key, min, max) => {
       const f = UI.field({ label, type: 'int', value: set[key] });
+      f.el.classList.add('inl'); // etichetta e valore sulla stessa riga
       f.input.addEventListener('change', () => { const v = parseInt(f.get(), 10); if (!isNaN(v)) set[key] = Math.max(min, Math.min(max, v)); S.save(); });
       return f.el;
     };
@@ -693,7 +694,7 @@
     root.append(sw('🧺 Avvisami prima della raccolta', 'promAttivo'), num('Giorni di anticipo (0-30)', 'promGiorni', 0, 30));
     root.append(sw('💧 Ricordami di annaffiare', 'annAttiva'), num('Ogni quanti giorni (1-30)', 'annGiorni', 1, 30), sw('🌦️ Adatta a verdura e meteo', 'annIntelligente'),
       UI.note('Ogni verdura ha il suo intervallo (i pomodori più spesso delle cipolle), più frequente per le piantine appena messe. Il meteo della città di ciascun orto (Open-Meteo) conta la pioggia come annaffiatura, rimanda se domani piove e anticipa se fa molto caldo. Serre e tunnel ignorano la pioggia.', 'small'),
-      sw('🌧️ Controlla la pioggia di oggi', 'pioggiaOraria'), num('Soglia pioggia in mm (1-30)', 'pioggiaSoglia', 1, 30),
+      sw('🌧️ Controlla la pioggia di oggi', 'pioggiaOraria'), num('Soglia di pioggia in mm (1-30)', 'pioggiaSoglia', 1, 30),
       UI.note('Quando la pioggia di oggi supera la soglia, nella scheda Attività ti viene chiesto di confermare: con «Sì» le piante nei solchi e nelle aiuole rialzate risultano annaffiate.', 'small'));
     root.append(sw('❄️ Avvisi di gelo', 'geloAttivo'), UI.note('Con una minima di 2 °C o meno prevista per domani, elenca le verdure all\'aperto da coprire (quelle sensibili e le piantine messe a dimora da meno di 30 giorni). Serve la città dell\'orto.', 'small'),
       sw('🌱 Avvisi di semina', 'seminaAttiva'), UI.note('Nei primi giorni del mese elenca cosa si può seminare nel tuo orto.', 'small'),

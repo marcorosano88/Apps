@@ -630,7 +630,7 @@
     if (ri.visibile) root.append(UI.card(h('div', { class: 'pre', text: ri.testo })));
     root.append(h('div', { class: 'row-gap' },
       h('button', { class: 'btn primary small', onclick: () => go(`#/orto/${orto.id}/verdura/0`), text: '🥕 Aggiungi verdura' }),
-      h('button', { class: 'btn small', onclick: () => go(`#/orto/${orto.id}/oggetto`), text: '🧰 Nuovo oggetto' }),
+      h('button', { class: 'btn small', onclick: () => go(`#/orto/${orto.id}/oggetto`), text: '🧰 Aggiungi oggetto' }),
       h('button', { class: 'btn small', text: '💧 Annaffia tutto', onclick: async () => {
         if (!colt.length) { await UI.alert('Annaffia tutto', 'Non ci sono verdure da annaffiare in questo orto.'); return; }
         if (await UI.confirm('Annaffia tutto', `Segnare come annaffiate oggi tutte le verdure di questo orto (${colt.length})?`, { ok: 'Sì' })) S.annaffiaTutto(orto.id);

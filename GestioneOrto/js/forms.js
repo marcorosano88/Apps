@@ -8,7 +8,7 @@
   const back = (p) => GO.nav.back(p);
   const ALTRA = 'Altra verdura…';
   const parseQuery = (q) => { const o = {}; new URLSearchParams(q || '').forEach((v, k) => (o[k] = v)); return o; };
-  GO.VERSION = '1.1.9'; // tenere uguale a VERSION in sw.js
+  GO.VERSION = '1.2.0'; // tenere uguale a VERSION in sw.js
 
   const bottoniForm = (annulla, salva, label) => h('div', { class: 'row-gap form-b' },
     h('button', { type: 'button', class: 'btn', onclick: annulla, text: 'Annulla' }),
@@ -666,6 +666,7 @@
     };
     const ora = (label, key) => {
       const f = UI.field({ label, type: 'time', value: set[key] });
+      f.el.classList.add('inl'); // etichetta e orario sulla stessa riga
       f.input.addEventListener('change', () => { if (f.get()) { set[key] = f.get(); S.save(); } });
       return f.el;
     };
@@ -674,7 +675,7 @@
     sel.input.addEventListener('change', () => { set.tema = sel.get(); GO.applicaTema(); S.save(); });
     root.append(sec('🎨 Aspetto'), sel.el);
 
-    root.append(sec('🔔 Avvisi e promemoria'),
+    root.append(sec('🔔 Notifiche'),
       UI.note('Con le notifiche attive i promemoria (raccolta, annaffiatura, gelo, semina, trapianto, concimazione) arrivano all\'ora giusta anche con l\'app chiusa. Per farlo, l\'app invia al server l\'elenco dei prossimi promemoria (titolo e testo, con i nomi di orti e verdure) e si aggiorna ogni volta che apri l\'app o cambi i dati. Se non le attivi, gli avvisi compaiono nella scheda Attività.', 'small'));
     const notif = 'Notification' in window;
     const nb = UI.field({ label: 'Notifiche (anche con l\'app chiusa)', type: 'checkbox', value: set.notificheBrowser && notif && Notification.permission === 'granted' });
@@ -694,14 +695,34 @@
       root.append(UI.note('Su iPhone e iPad le notifiche funzionano solo se apri Gestione Orto dall\'icona sulla schermata Home. Non serve scaricare nulla dall\'App Store.\n\n1. Apri questa pagina in Safari.\n2. Tocca il pulsante Condividi (il quadrato con la freccia in su).\n3. Scegli «Aggiungi alla schermata Home» e conferma.\n4. Chiudi Safari e apri Gestione Orto dalla nuova icona.\n5. Vai in Impostazioni e attiva le notifiche.', 'warn'));
     }
     root.append(nb.el);
-    root.append(sw('🧺 Avvisami prima della raccolta', 'promAttivo'), num('Giorni di anticipo (0-30)', 'promGiorni', 0, 30));
-    root.append(sw('💧 Ricordami di annaffiare', 'annAttiva'), num('Ogni quanti giorni (1-30)', 'annGiorni', 1, 30), sw('🌦️ Adatta a verdura e meteo', 'annIntelligente'),
-      UI.note('Ogni verdura ha il suo intervallo (i pomodori più spesso delle cipolle), più frequente per le piantine appena messe. Il meteo della città di ciascun orto (Open-Meteo) conta la pioggia come annaffiatura, rimanda se domani piove e anticipa se fa molto caldo. Serre e tunnel ignorano la pioggia.', 'small'),
+
+    // Sezioni come nell'app Android: titolo, interruttore, opzioni sulla stessa riga e nota esplicativa.
+    root.append(sec('🔔 Promemoria di raccolta'),
+      sw('Avvisami prima della raccolta', 'promAttivo'), num('Giorni di anticipo (0-30)', 'promGiorni', 0, 30), ora('Orario della notifica', 'promOra'),
+      UI.note('Per ogni verdura con raccolta stimata. L\'orario può variare di qualche minuto.', 'small'));
+
+    root.append(sec('💧 Promemoria di annaffiatura'),
+      sw('Ricordami di annaffiare', 'annAttiva'), num('Ogni quanti giorni (1-30)', 'annGiorni', 1, 30), ora('Orario della notifica', 'annOra'),
+      sw('🌦️ Adatta a verdura e meteo', 'annIntelligente'),
+      UI.note('Ogni verdura ha il suo intervallo (i pomodori più spesso delle cipolle), più frequente per le piantine appena messe. Il meteo della città di ciascun orto (Open-Meteo) conta la pioggia come annaffiatura, rimanda se domani piove e anticipa se fa molto caldo. Serre e tunnel ignorano la pioggia. Le previsioni si aggiornano quando apri l\'app.', 'small'),
       sw('🌧️ Controlla la pioggia di oggi', 'pioggiaOraria'), num('Soglia di pioggia in mm (1-30)', 'pioggiaSoglia', 1, 30),
-      UI.note('Quando la pioggia di oggi supera la soglia, nella scheda Attività ti viene chiesto di confermare: con «Sì» le piante nei solchi e nelle aiuole rialzate risultano annaffiate.', 'small'));
-    root.append(sw('❄️ Avvisi di gelo', 'geloAttivo'), UI.note('Con una minima di 2 °C o meno prevista per domani, elenca le verdure all\'aperto da coprire (quelle sensibili e le piantine messe a dimora da meno di 30 giorni). Serve la città dell\'orto.', 'small'),
-      sw('🌱 Avvisi di semina', 'seminaAttiva'), UI.note('Nei primi giorni del mese elenca cosa si può seminare nel tuo orto.', 'small'),
-      sw('🌿 Avvisi di trapianto', 'trapiantoAttivo'), sw('🧪 Avvisi di concimazione', 'concimazioneAttiva'));
+      UI.note('Quando apri l\'app, somma la pioggia caduta oggi (Open-Meteo, della città di ciascun orto: se piove a Firenze segna solo gli orti di Firenze). Superata la soglia, nella scheda Attività ti chiede «Sta piovendo?»: con «Sì» le piante nei solchi e nelle aiuole rialzate risultano annaffiate. Serve la città dell\'orto («Modifica orto»).', 'small'));
+
+    root.append(sec('❄️ Avvisi di gelo'),
+      sw('Avvisami se è previsto gelo', 'geloAttivo'),
+      UI.note('La sera prima di una notte con minima di 2 °C o meno (alle 18:00) ti elenca le verdure all\'aperto da coprire: quelle che soffrono il freddo (pomodori, peperoni, zucchine…) e le piantine messe a dimora da meno di 30 giorni. Le serre sono escluse. Serve la città dell\'orto («Modifica orto»).', 'small'));
+
+    root.append(sec('🌱 Promemoria di semina'),
+      sw('Avvisami delle nuove semine', 'seminaAttiva'),
+      UI.note('Il primo giorno del mese (all\'orario dei promemoria di raccolta) ti dice quali verdure da quel mese si possono seminare nel tuo orto.', 'small'));
+
+    root.append(sec('🌿 Promemoria di trapianto'),
+      sw('Avvisami quando trapiantare', 'trapiantoAttivo'),
+      UI.note('Per le verdure seminate in una vaschetta alveolare, nel giorno in cui sono pronte per il trapianto (i giorni dalla semina sono quelli del catalogo; all\'orario dei promemoria di raccolta). Funziona anche con la raccolta disattivata.', 'small'));
+
+    root.append(sec('🧪 Promemoria di concimazione'),
+      sw('Avvisami quando concimare', 'concimazioneAttiva'),
+      UI.note('Ogni giorno (all\'orario dei promemoria di raccolta) elenca le piante da concimare e con cosa: pomodori, peperoni, melanzane e zucchine a intervalli, cavoli e bietola una volta sola. Si azzera quando registri un concime sulla pianta o sul solco. Piano indicativo.', 'small'));
 
     root.append(sec('💾 Dati'),
       UI.note('I dati sono salvati solo su questo dispositivo (nel browser). Esporta un backup JSON per conservarli o spostarli su un altro dispositivo.', 'small'),

@@ -1,5 +1,5 @@
 /* Gestione Orto PWA - service worker: cache offline di tutti gli asset dell'app. Cambia VERSION a ogni rilascio. */
-const VERSION = '1.1.9';
+const VERSION = '1.2.0';
 const CACHE = `gestione-orto-${VERSION}`;
 const ASSETS = [
   './',

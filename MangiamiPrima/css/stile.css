@@ -141,6 +141,7 @@ textarea { resize: vertical; min-height: 100px; }
 .banner li { margin: 2px 0; }
 .banner .azioni { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
 .nota { border: 1px dashed var(--line); border-radius: var(--raggio); padding: 10px 12px; font-size: 14px; color: var(--text-soft); }
+.nota ol { margin: 8px 0 0; padding-left: 22px; }
 
 /* ---------- Dispensa ---------- */
 .testata {

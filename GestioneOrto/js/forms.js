@@ -8,7 +8,7 @@
   const back = (p) => GO.nav.back(p);
   const ALTRA = 'Altra verdura…';
   const parseQuery = (q) => { const o = {}; new URLSearchParams(q || '').forEach((v, k) => (o[k] = v)); return o; };
-  GO.VERSION = '1.1.7'; // tenere uguale a VERSION in sw.js
+  GO.VERSION = '1.1.8'; // tenere uguale a VERSION in sw.js
 
   const bottoniForm = (annulla, salva, label) => h('div', { class: 'row-gap form-b' },
     h('button', { type: 'button', class: 'btn', onclick: annulla, text: 'Annulla' }),
@@ -682,7 +682,7 @@
     nb.input.addEventListener('change', async () => {
       if (!nb.get()) { set.notificheBrowser = false; S.save(); if (GO.push) GO.push.disattiva(); return; }
       if (!notif || !GO.push || !GO.push.supportato()) { await UI.alert('Notifiche non disponibili', 'Questo browser non supporta le notifiche. Su iPhone servono iOS 16.4 o successivo e l\'app aggiunta alla schermata Home.'); nb.set(false); return; }
-      if (GO.push.isIOS() && !GO.push.standalone()) { await UI.alert('Installa prima l\'app', 'Su iPhone le notifiche funzionano solo con l\'app installata: in Safari tocca Condividi e poi «Aggiungi alla schermata Home», quindi riaprila da lì.'); nb.set(false); return; }
+      if (GO.push.isIOS() && !GO.push.standalone()) { await UI.alert('Aggiungi Gestione Orto alla schermata Home', 'Su iPhone e iPad le notifiche funzionano solo se apri Gestione Orto dall\'icona sulla schermata Home. Non serve scaricare nulla dall\'App Store.\n\n1. Apri questa pagina in Safari.\n2. Tocca il pulsante Condividi (il quadrato con la freccia in su).\n3. Scegli «Aggiungi alla schermata Home» e conferma.\n4. Chiudi Safari e apri Gestione Orto dalla nuova icona.\n5. Vai in Impostazioni e attiva di nuovo le notifiche.'); nb.set(false); return; }
       const p = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
       if (p !== 'granted') { set.notificheBrowser = false; nb.set(false); S.save(); await UI.alert('Permesso negato', 'Per attivare le notifiche consenti il permesso dalle impostazioni del browser.'); return; }
       set.notificheBrowser = true;

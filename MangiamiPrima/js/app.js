@@ -95,7 +95,8 @@
   function notaNotifiche() {
     const s = MP.notifiche.stato();
     if (s === 'serve-installazione') {
-      return `<p class="nota">Per ricevere le notifiche di scadenza su iPhone/iPad installa l'app: in Safari tocca Condividi e poi "Aggiungi alla schermata Home".</p>`;
+      return `<div class="nota"><strong>Per ricevere le notifiche di scadenza su iPhone/iPad aggiungi Mangiami Prima alla schermata Home.</strong> Non serve scaricare nulla dall'App Store.
+        <ol><li>Apri questa pagina in Safari.</li><li>Tocca il pulsante Condividi (il quadrato con la freccia in su).</li><li>Scegli "Aggiungi alla schermata Home" e conferma.</li><li>Chiudi Safari e apri Mangiami Prima dalla nuova icona.</li><li>Vai in Impostazioni e attiva le notifiche.</li></ol></div>`;
     }
     if (s === 'default') {
       return `<p class="nota">Vuoi essere avvisato quando i prodotti stanno per scadere? <button type="button" class="pillola" data-az="attiva-notifiche">Attiva notifiche</button></p>`;
@@ -542,7 +543,7 @@
       case 'granted': if (MP.push && MP.push.attivo()) return 'Notifiche attive: l\'avviso arriva dal server anche con l\'app chiusa.';
         return 'Notifiche attive. Se l\'app è chiusa, l\'avviso arriva solo dove il sistema consente l\'esecuzione in background; altrimenti compare all\'apertura dell\'app e nel riquadro in Home.';
       case 'denied': return 'Notifiche bloccate: abilitale dalle impostazioni del browser o del sistema. Nel frattempo i prodotti in scadenza compaiono nel riquadro in Home.';
-      case 'serve-installazione': return 'Su iPhone/iPad le notifiche funzionano solo con l\'app installata: in Safari tocca Condividi e poi "Aggiungi alla schermata Home", quindi riaprila da lì.';
+      case 'serve-installazione': return 'Su iPhone/iPad le notifiche funzionano solo se apri Mangiami Prima dall\'icona sulla schermata Home (non serve l\'App Store). In Safari tocca Condividi, poi "Aggiungi alla schermata Home" e conferma; chiudi Safari, apri Mangiami Prima dalla nuova icona e attiva di nuovo le notifiche.';
       case 'non-supportato': return 'Questo browser non supporta le notifiche: i prodotti in scadenza compaiono nel riquadro in Home.';
       default: return 'Le notifiche non sono ancora attivate.';
     }

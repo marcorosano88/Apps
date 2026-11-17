@@ -193,6 +193,12 @@ textarea { resize: vertical; min-height: 100px; }
 .impostazioni { display: grid; gap: 15px; }
 .copyright { text-align: center; font-style: italic; margin-top: 24px; color: var(--text-soft); }
 .stato-notifiche { font-size: 14px; }
+/* Interruttore (stile "swipe") */
+.interruttore { appearance: none; -webkit-appearance: none; flex: none; width: 52px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 16px; background: #9e9e9e; position: relative; cursor: pointer; transition: background .15s; }
+.interruttore::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); transition: transform .15s; }
+.interruttore:checked { background: var(--primary); }
+.interruttore:checked::after { transform: translateX(20px); }
+.interruttore:disabled { opacity: .5; cursor: default; }
 
 /* ---------- Spinner, scanner, dialogo ---------- */
 .spinner { width: 28px; height: 28px; margin: 0 auto; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: gira .8s linear infinite; }

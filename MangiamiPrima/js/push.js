@@ -109,7 +109,7 @@
     if (!supportato()) return;
     MP.store.onChange(sincronizza);
     window.addEventListener('online', () => { if (leggi('mp_push_da_inviare') === '1') sincronizza(); });
-    if (Notification.permission === 'granted') attiva(); // rinnova la sottoscrizione ad ogni apertura
+    if (Notification.permission === 'granted' && MP.store.impostazioni().notifiche !== false) attiva(); // rinnova la sottoscrizione ad ogni apertura
   }
 
   MP.push = { supportato, attivo, attiva, disattiva, sincronizza, avvia };

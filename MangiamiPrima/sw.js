@@ -1,5 +1,5 @@
 /* Mangiami Prima - service worker. Incrementare VERSIONE a ogni modifica dei file dell'app. */
-const VERSIONE = 'v1.3.2';
+const VERSIONE = 'v1.3.3';
 const CACHE = `mangiamiprima-${VERSIONE}`;
 const FILE = [
   './',
@@ -74,7 +74,7 @@ function iso(d) {
 
 async function controllaScadenze() {
   const snap = await leggiSnapshot();
-  if (!snap || snap.push || self.Notification?.permission !== 'granted') return; // snap.push: se ne occupa il server
+  if (!snap || snap.push || snap.attive === false || self.Notification?.permission !== 'granted') return; // snap.push: se ne occupa il server; attive false: spente dalle Impostazioni
   const adesso = new Date();
   const hhmm = `${String(adesso.getHours()).padStart(2, '0')}:${String(adesso.getMinutes()).padStart(2, '0')}`;
   const oggi = iso(adesso);

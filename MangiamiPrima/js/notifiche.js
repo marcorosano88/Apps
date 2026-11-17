@@ -20,12 +20,32 @@
     try {
       const p = await Notification.requestPermission();
       if (p === 'granted') {
+        MP.store.impostaImpostazioni({ notifiche: true, ultimaNotifica: '' });
         await registraSincronizzazione();
         if (MP.push) await MP.push.attiva(); // push dal server: arriva anche ad app chiusa
         controlla();
       }
       return p;
     } catch (e) { return Notification.permission; }
+  }
+
+  /** Interruttore delle Impostazioni. true = accese, false = spente. Restituisce lo stato finale (true/false). */
+  async function imposta(acceso) {
+    if (acceso) {
+      if (Notification.permission !== 'granted') {
+        const p = await richiediPermesso(); // se concesso imposta gia' notifiche: true e attiva il push
+        return p === 'granted';
+      }
+      MP.store.impostaImpostazioni({ notifiche: true, ultimaNotifica: '' });
+      await registraSincronizzazione();
+      if (MP.push) await MP.push.attiva();
+      controlla();
+      return true;
+    }
+    MP.store.impostaImpostazioni({ notifiche: false });
+    if (MP.push) await MP.push.disattiva(); // annulla la sottoscrizione e cancella i dati dal server
+    await salvaSnapshot();
+    return false;
   }
 
   /* ---------- Testo ---------- */
@@ -56,6 +76,7 @@
     if (stato() !== 'granted') return;
     if (MP.push && MP.push.attivo()) return; // ci pensa il server (evita la notifica doppia)
     const imp = MP.store.impostazioni();
+    if (imp.notifiche === false) return; // spente dall'interruttore delle Impostazioni
     const adesso = new Date();
     const hhmm = `${String(adesso.getHours()).padStart(2, '0')}:${String(adesso.getMinutes()).padStart(2, '0')}`;
     if (hhmm < imp.orario || imp.ultimaNotifica === MP.date.oggi()) return;
@@ -78,6 +99,7 @@
       const imp = MP.store.impostazioni();
       const snap = {
         push: !!(MP.push && MP.push.attivo()),
+        attive: imp.notifiche !== false,
         giorniPreavviso: imp.giorniPreavviso, orario: imp.orario, ultimaNotifica: imp.ultimaNotifica,
         scadenze: MP.store.prodotti().filter((p) => p.dataScadenza).map((p) => ({ titolo: p.titolo, scadenza: p.dataScadenza }))
       };
@@ -113,5 +135,5 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) controlla(); });
   }
 
-  MP.notifiche = { stato, richiediPermesso, controlla, avvia, prodottiInScadenza, isIOS, standalone, testo };
+  MP.notifiche = { stato, richiediPermesso, imposta, controlla, avvia, prodottiInScadenza, isIOS, standalone, testo };
 })();

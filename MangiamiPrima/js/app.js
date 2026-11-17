@@ -540,12 +540,13 @@
   }
   function testoStatoNotifiche() {
     switch (MP.notifiche.stato()) {
-      case 'granted': if (MP.push && MP.push.attivo()) return 'Notifiche attive: l\'avviso arriva dal server anche con l\'app chiusa.';
+      case 'granted': if (store.impostazioni().notifiche === false) return 'Notifiche disattivate: non riceverai avvisi di scadenza. Attiva l\'interruttore per riceverli.';
+        if (MP.push && MP.push.attivo()) return 'Notifiche attive: l\'avviso arriva dal server anche con l\'app chiusa.';
         return 'Notifiche attive. Se l\'app è chiusa, l\'avviso arriva solo dove il sistema consente l\'esecuzione in background; altrimenti compare all\'apertura dell\'app e nel riquadro in Home.';
       case 'denied': return 'Notifiche bloccate: abilitale dalle impostazioni del browser o del sistema. Nel frattempo i prodotti in scadenza compaiono nel riquadro in Home.';
       case 'serve-installazione': return 'Su iPhone/iPad le notifiche funzionano solo se apri Mangiami Prima dall\'icona sulla schermata Home (non serve l\'App Store). In Safari tocca Condividi, poi "Aggiungi alla schermata Home" e conferma; chiudi Safari, apri Mangiami Prima dalla nuova icona e attiva di nuovo le notifiche.';
       case 'non-supportato': return 'Questo browser non supporta le notifiche: i prodotti in scadenza compaiono nel riquadro in Home.';
-      default: return 'Le notifiche non sono ancora attivate.';
+      default: return 'Le notifiche non sono ancora attivate: attiva l\'interruttore e consenti l\'invio.';
     }
   }
 
@@ -559,8 +560,9 @@
           <output id="giorni-n" aria-live="polite"></output>
           <button type="button" class="piccolo sec" id="piu" aria-label="Un giorno in più" style="width:44px;min-height:44px">+</button></div></div>
       <div class="riga"><label for="orario" style="flex:1">Ora della notifica</label><input id="orario" type="time" style="width:auto;flex:none" value="${esc(imp.orario)}"></div>
+      <div class="riga"><label for="notifiche" style="flex:1">Notifiche di scadenza</label>
+        <input type="checkbox" id="notifiche" class="interruttore" role="switch"></div>
       <div class="stato-notifiche soft" id="stato-notifiche"></div>
-      <div id="azione-notifiche"></div>
       <div class="riga"><label for="tema" style="flex:1">Tema</label>
         <select id="tema" style="width:auto;flex:none"><option value="auto">Automatico</option><option value="chiaro">Chiaro</option><option value="scuro">Scuro</option></select></div>
 
@@ -587,10 +589,16 @@
       $('#piu', root).disabled = g >= MP.MASSIMO_GIORNI;
       $('#stato-notifiche', root).textContent = testoStatoNotifiche();
       const s = MP.notifiche.stato();
-      $('#azione-notifiche', root).innerHTML = s === 'default' ? '<button type="button" id="attiva" class="medio" style="min-height:48px;font-size:16px">Attiva notifiche</button>' : '';
-      const a = $('#attiva', root);
-      if (a) a.addEventListener('click', async () => { await MP.notifiche.richiediPermesso(); aggiorna(); });
+      const sw = $('#notifiche', root);
+      sw.checked = s === 'granted' && store.impostazioni().notifiche !== false;
+      sw.disabled = s !== 'default' && s !== 'granted'; // bloccate, non supportate o app da installare: non si puo' cambiare da qui
     }
+    $('#notifiche', root).addEventListener('change', async (e) => {
+      const sw = e.target;
+      sw.disabled = true;
+      try { await MP.notifiche.imposta(sw.checked); } catch (err) { console.warn('Notifiche:', err); }
+      aggiorna();
+    });
     $('#meno', root).addEventListener('click', () => { store.impostaImpostazioni({ giorniPreavviso: store.impostazioni().giorniPreavviso - 1, ultimaNotifica: '' }); aggiorna(); });
     $('#piu', root).addEventListener('click', () => { store.impostaImpostazioni({ giorniPreavviso: store.impostazioni().giorniPreavviso + 1, ultimaNotifica: '' }); aggiorna(); });
     $('#orario', root).addEventListener('change', (e) => { if (e.target.value) store.impostaImpostazioni({ orario: e.target.value, ultimaNotifica: '' }); });

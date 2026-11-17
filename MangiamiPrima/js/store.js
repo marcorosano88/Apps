@@ -6,7 +6,7 @@
   const CHIAVE_DATI = 'mp.dati.v1';
   const CHIAVE_IMPOSTAZIONI = 'mp.impostazioni.v1';
 
-  MP.VERSIONE = '1.3.2'; // tenere uguale a VERSIONE in sw.js (senza la v)
+  MP.VERSIONE = '1.3.3'; // tenere uguale a VERSIONE in sw.js (senza la v)
   MP.GIORNI_PREAVVISO = 3; // entro quanti giorni un prodotto e' "in scadenza"
   MP.GIORNI_PREDEFINITI = 2;
   MP.MASSIMO_GIORNI = 14;
@@ -91,8 +91,9 @@
   }
 
   function normalizzaImpostazioni(i) {
-    const r = { giorniPreavviso: MP.GIORNI_PREDEFINITI, orario: '09:00', tema: 'auto', ultimaNotifica: '' };
+    const r = { giorniPreavviso: MP.GIORNI_PREDEFINITI, orario: '09:00', tema: 'auto', ultimaNotifica: '', notifiche: true };
     if (!i || typeof i !== 'object') return r;
+    if (typeof i.notifiche === 'boolean') r.notifiche = i.notifiche; // interruttore delle Impostazioni (false = avvisi spenti)
     const g = parseInt(i.giorniPreavviso, 10);
     if (Number.isFinite(g)) r.giorniPreavviso = Math.min(Math.max(g, 0), MP.MASSIMO_GIORNI);
     if (typeof i.orario === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(i.orario)) r.orario = i.orario;

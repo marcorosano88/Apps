@@ -56,6 +56,9 @@ main > * + * { margin-top: 12px; }
 
 /* ---- componenti ---- */
 .pg-t { font-size: 22px; font-weight: 700; }
+.pg-riga { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.pg-riga .pg-t { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.pg-riga .row-gap { flex-wrap: nowrap; }
 .grp { font-size: 15px; font-weight: 650; color: var(--pr); margin-top: 18px !important; }
 :root[data-theme="dark"] .grp { color: var(--acc); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .grp { color: var(--acc); } }

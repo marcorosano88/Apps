@@ -617,42 +617,48 @@
     const haSolchi = !balcone && totale > 0;
     if (st.sez === 'sol' && !haSolchi) st.sez = 'pan';
 
-    root.append(h('h2', { class: 'pg-t', text: orto.nome }));
+    root.append(h('div', { class: 'pg-riga' },
+      h('h2', { class: 'pg-t', text: orto.nome }),
+      h('div', { class: 'row-gap' },
+        h('button', { class: 'btn small', onclick: () => go(`#/orto/${orto.id}/modifica`), text: '✏️ Modifica orto' }),
+        h('button', { class: 'btn small danger', text: '🗑️ Elimina orto', onclick: async () => {
+          if (!(await UI.confirm('Elimina orto', 'Verranno eliminati anche verdure e oggetti. Continuare?', { ok: 'Elimina', danger: true }))) return;
+          S.deleteOrto(orto.id);
+          GO.nav.replace('#/orti');
+        } }))));
     const ri = L.riepilogoOrto(orto, colt);
     if (ri.visibile) root.append(UI.card(h('div', { class: 'pre', text: ri.testo })));
     root.append(h('div', { class: 'row-gap' },
       h('button', { class: 'btn primary small', onclick: () => go(`#/orto/${orto.id}/verdura/0`), text: '🥕 Aggiungi verdura' }),
-      h('button', { class: 'btn small', onclick: () => go(`#/orto/${orto.id}/oggetto`), text: '🧰 Aggiungi oggetto' }),
-      h('button', { class: 'btn small', onclick: () => go(`#/orto/${orto.id}/modifica`), text: '✏️ Modifica orto' })));
+      h('button', { class: 'btn small', onclick: () => go(`#/orto/${orto.id}/oggetto`), text: '🧰 Nuovo oggetto' }),
+      h('button', { class: 'btn small', text: '💧 Annaffia tutto', onclick: async () => {
+        if (!colt.length) { await UI.alert('Annaffia tutto', 'Non ci sono verdure da annaffiare in questo orto.'); return; }
+        if (await UI.confirm('Annaffia tutto', `Segnare come annaffiate oggi tutte le verdure di questo orto (${colt.length})?`, { ok: 'Sì' })) S.annaffiaTutto(orto.id);
+      } }),
+      h('button', { class: 'btn small', text: '💧 Annaffia…', onclick: async () => {
+        if (!colt.length) { await UI.alert('Annaffia', 'Non ci sono verdure da annaffiare in questo orto.'); return; }
+        const ids = await UI.pickMany('💧 Annaffia', 'Scegli le verdure da segnare come annaffiate oggi.', vociSelezione(colt, oggetti), 'Annaffia');
+        if (!ids) return;
+        ids.forEach((i) => { const c = S.get('coltivazioni', i); if (c) c.ultimaAnn = L.iso(L.today()); });
+        S.save();
+      } }),
+      h('button', { class: 'btn small', text: '🧪 Concima…', onclick: async () => {
+        if (!colt.length) { await UI.alert('Concima', 'Non ci sono verdure da concimare in questo orto.'); return; }
+        const sost = await V.scegliSostanza('Quale concime usi?');
+        if (!sost) return;
+        const ids = await UI.pickMany(`🧪 Concima: ${sost}`, 'Scegli le verdure da concimare.', vociSelezione(colt, oggetti), 'Concima');
+        if (!ids) return;
+        const data = await UI.askDate(`Data di inserimento: ${sost}`, L.iso(L.today()));
+        if (!data) return;
+        ids.forEach((i) => { const c = S.get('coltivazioni', i); if (c) S.db.trattVerdura.push({ id: S.id(), ortoId: c.ortoId, coltId: c.id, sostanza: sost, data }); });
+        S.save();
+      } })));
     const sezioni = [{ id: 'pan', label: 'Panoramica' }];
     if (haSolchi) sezioni.push({ id: 'sol', label: 'Solchi' });
     sezioni.push({ id: 'ogg', label: 'Oggetti' });
     root.append(UI.seg(sezioni, st.sez, (s) => { st.sez = s; GO.render(); }));
 
     if (st.sez === 'pan') {
-      root.append(h('div', { class: 'row-gap' },
-        h('button', { class: 'btn small', text: '💧 Annaffia tutto', onclick: async () => {
-          if (!colt.length) { await UI.alert('Annaffia tutto', 'Non ci sono verdure da annaffiare in questo orto.'); return; }
-          if (await UI.confirm('Annaffia tutto', `Segnare come annaffiate oggi tutte le verdure di questo orto (${colt.length})?`, { ok: 'Sì' })) S.annaffiaTutto(orto.id);
-        } }),
-        h('button', { class: 'btn small', text: '💧 Annaffia…', onclick: async () => {
-          if (!colt.length) { await UI.alert('Annaffia', 'Non ci sono verdure da annaffiare in questo orto.'); return; }
-          const ids = await UI.pickMany('💧 Annaffia', 'Scegli le verdure da segnare come annaffiate oggi.', vociSelezione(colt, oggetti), 'Annaffia');
-          if (!ids) return;
-          ids.forEach((i) => { const c = S.get('coltivazioni', i); if (c) c.ultimaAnn = L.iso(L.today()); });
-          S.save();
-        } }),
-        h('button', { class: 'btn small', text: '🧪 Concima…', onclick: async () => {
-          if (!colt.length) { await UI.alert('Concima', 'Non ci sono verdure da concimare in questo orto.'); return; }
-          const sost = await V.scegliSostanza('Quale concime usi?');
-          if (!sost) return;
-          const ids = await UI.pickMany(`🧪 Concima: ${sost}`, 'Scegli le verdure da concimare.', vociSelezione(colt, oggetti), 'Concima');
-          if (!ids) return;
-          const data = await UI.askDate(`Data di inserimento: ${sost}`, L.iso(L.today()));
-          if (!data) return;
-          ids.forEach((i) => { const c = S.get('coltivazioni', i); if (c) S.db.trattVerdura.push({ id: S.id(), ortoId: c.ortoId, coltId: c.id, sostanza: sost, data }); });
-          S.save();
-        } })));
       if (colt.length) {
         const luogoDi = (c) => L.luogo(c, contenitori.find((o) => o.id === c.oggettoId));
         const voci = colt.map((c) => ({ c, luogo: luogoDi(c) }));
@@ -740,11 +746,6 @@
       }
     }
 
-    root.append(h('div', { class: 'sep' }), h('button', { class: 'btn danger block', text: '🗑️ Elimina orto', onclick: async () => {
-      if (!(await UI.confirm('Elimina orto', 'Verranno eliminati anche verdure e oggetti. Continuare?', { ok: 'Elimina', danger: true }))) return;
-      S.deleteOrto(orto.id);
-      GO.nav.replace('#/orti');
-    } }));
     return { title: orto.nome, back: '#/orti', el: root };
   };
 

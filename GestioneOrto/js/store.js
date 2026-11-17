@@ -376,7 +376,15 @@
   ST.scaricaPrezzi = async (anno) => {
     try {
       const prodotti = Array.from(new Set(Object.values(D.PRODOTTI_PREZZI))).join(',');
-      const r = await conTimeout(`https://api.tech.ec.europa.eu/agrifood/api/fruitAndVegetable/pricesSupplyChain?memberStateCodes=IT&years=${anno}&products=${encodeURIComponent(prodotti)}`, 40000);
+      // L'API UE non ammette il CORS: la richiesta passa dalla Edge Function "prezzi-orto" del progetto Supabase (vedi push.js).
+      const cfg = GO.supabase;
+      if (!cfg) return 'Servizio prezzi non configurato.';
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 55000);
+      let r;
+      try {
+        r = await fetch(`${cfg.url}/functions/v1/prezzi-orto?years=${anno}&products=${encodeURIComponent(prodotti)}`, { headers: { apikey: cfg.key }, signal: ctl.signal });
+      } finally { clearTimeout(timer); }
       if (r.status === 429) return 'Servizio prezzi momentaneamente al limite delle richieste: riprova più tardi.';
       if (r.status !== 404 && !r.ok) return `Il servizio prezzi ha risposto ${r.status}.`;
       const nuovi = r.status === 404 ? [] : interpretaPrezzi(await r.json());

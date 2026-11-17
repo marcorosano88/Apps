@@ -7,8 +7,9 @@
   const { L, S, net: ST, V } = GO;
 
   // --- Configurazione (vedi _backend-supabase/LEGGIMI.md) ---
-  const PUSH_URL = 'https://dqbqebrfwfbtqnvaejel.supabase.co'; // progetto Supabase con le tabelle orto_*
-  const PUSH_KEY = 'sb_publishable_NvOCatNLryMZhvMJTW0VMA_FgQIJSTG'; // chiave pubblica (anon)
+  const PUSH_URL = 'https://cvonyqexrnwvebfxgdih.supabase.co'; // progetto Supabase di Gestione Orto (NON quello di Mangiami Prima)
+  const PUSH_KEY = 'sb_publishable_L0QszZJh33AXcAk2SM2DJw_KNz6vfk-'; // chiave pubblica (anon)
+  GO.supabase = { url: PUSH_URL, key: PUSH_KEY }; // usato anche da store.js per il servizio prezzi
   const VAPID_PUBBLICA = 'BLkxXKXkJdpcS5-ab3BBx3gzFlmCQkZBrcEZlHBnwYmCov1teb6Y9qBNeiDOtvruLY2n_BrHiWb0ySQt1EYBVuw'; // coppia propria di Gestione Orto
 
   const GIORNI_AVANTI = 14; // come l'app nativa: annaffiatura, gelo, concimazione per i prossimi 14 giorni

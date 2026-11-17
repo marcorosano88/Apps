@@ -1,5 +1,5 @@
 /* Mangiami Prima - service worker. Incrementare VERSIONE a ogni modifica dei file dell'app. */
-const VERSIONE = 'v1.3.3';
+const VERSIONE = 'v1.3.4';
 const CACHE = `mangiamiprima-${VERSIONE}`;
 const FILE = [
   './',
@@ -19,7 +19,8 @@ const FILE = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILE)).then(() => self.skipWaiting()));
+  // cache: 'reload' = scarica i file freschi dal server, non dalla cache HTTP del browser (GitHub Pages li tiene 10 minuti)
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILE.map((f) => new Request(f, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {

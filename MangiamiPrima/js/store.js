@@ -6,7 +6,7 @@
   const CHIAVE_DATI = 'mp.dati.v1';
   const CHIAVE_IMPOSTAZIONI = 'mp.impostazioni.v1';
 
-  MP.VERSIONE = '1.3.3'; // tenere uguale a VERSIONE in sw.js (senza la v)
+  MP.VERSIONE = '1.3.4'; // tenere uguale a VERSIONE in sw.js (senza la v)
   MP.GIORNI_PREAVVISO = 3; // entro quanti giorni un prodotto e' "in scadenza"
   MP.GIORNI_PREDEFINITI = 2;
   MP.MASSIMO_GIORNI = 14;

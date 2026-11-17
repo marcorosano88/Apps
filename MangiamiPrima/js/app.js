@@ -635,7 +635,15 @@
   /* ================= Avvio ================= */
   function registraServiceWorker() {
     if (!('serviceWorker' in navigator) || !/^(https:|http:\/\/(localhost|127\.0\.0\.1))/.test(location.protocol + '//' + location.hostname)) return;
-    navigator.serviceWorker.register('sw.js').catch((e) => console.warn('Service worker non registrato', e));
+    // Quando arriva una versione nuova, ricarica la pagina: altrimenti resta visibile quella vecchia fino alla riapertura successiva.
+    const aveva = !!navigator.serviceWorker.controller;
+    let ricarica = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!aveva || ricarica) return;
+      ricarica = true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('sw.js').then((reg) => reg.update().catch(() => {})).catch((e) => console.warn('Service worker non registrato', e));
   }
 
   async function sincronizzaCoda() {

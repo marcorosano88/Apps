@@ -96,7 +96,7 @@
     const s = MP.notifiche.stato();
     if (s === 'serve-installazione') {
       return `<div class="nota"><strong>Per ricevere le notifiche di scadenza su iPhone/iPad aggiungi Mangiami Prima alla schermata Home.</strong> Non serve scaricare nulla dall'App Store.
-        <ol><li>Apri questa pagina in Safari.</li><li>Tocca il pulsante Condividi (il quadrato con la freccia in su).</li><li>Scegli "Aggiungi alla schermata Home" e conferma.</li><li>Chiudi Safari e apri Mangiami Prima dalla nuova icona.</li><li>Vai in Impostazioni e attiva le notifiche.</li></ol></div>`;
+        <ol><li>Apri questa pagina in Safari.</li><li>Tocca il pulsante Condividi (il quadrato con la freccia in su).</li><li>Scegli "Aggiungi alla schermata Home" e conferma.</li><li>Chiudi Safari e apri Mangiami Prima dalla nuova icona.</li><li>Dall'app aperta con l'icona tocca "Attiva notifiche" (lo trovi qui in Home e in Impostazioni) e consenti.</li></ol></div>`;
     }
     if (s === 'default') {
       return `<p class="nota">Vuoi essere avvisato quando i prodotti stanno per scadere? <button type="button" class="pillola" data-az="attiva-notifiche">Attiva notifiche</button></p>`;

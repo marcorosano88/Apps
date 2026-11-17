@@ -8,7 +8,7 @@
   const back = (p) => GO.nav.back(p);
   const ALTRA = 'Altra verdura…';
   const parseQuery = (q) => { const o = {}; new URLSearchParams(q || '').forEach((v, k) => (o[k] = v)); return o; };
-  GO.VERSION = '1.1.8'; // tenere uguale a VERSION in sw.js
+  GO.VERSION = '1.1.9'; // tenere uguale a VERSION in sw.js
 
   const bottoniForm = (annulla, salva, label) => h('div', { class: 'row-gap form-b' },
     h('button', { type: 'button', class: 'btn', onclick: annulla, text: 'Annulla' }),
@@ -690,6 +690,9 @@
       const ok = await GO.push.attiva();
       if (!ok) await UI.alert('Notifiche attivate, ma…', 'Non sono riuscito a registrare il dispositivo sul server (rete o servizio non raggiungibile). Riproverò al prossimo avvio o alla prossima modifica.');
     });
+    if (GO.push && GO.push.isIOS() && !GO.push.standalone()) {
+      root.append(UI.note('Su iPhone e iPad le notifiche funzionano solo se apri Gestione Orto dall\'icona sulla schermata Home. Non serve scaricare nulla dall\'App Store.\n\n1. Apri questa pagina in Safari.\n2. Tocca il pulsante Condividi (il quadrato con la freccia in su).\n3. Scegli «Aggiungi alla schermata Home» e conferma.\n4. Chiudi Safari e apri Gestione Orto dalla nuova icona.\n5. Vai in Impostazioni e attiva le notifiche.', 'warn'));
+    }
     root.append(nb.el);
     root.append(sw('🧺 Avvisami prima della raccolta', 'promAttivo'), num('Giorni di anticipo (0-30)', 'promGiorni', 0, 30));
     root.append(sw('💧 Ricordami di annaffiare', 'annAttiva'), num('Ogni quanti giorni (1-30)', 'annGiorni', 1, 30), sw('🌦️ Adatta a verdura e meteo', 'annIntelligente'),

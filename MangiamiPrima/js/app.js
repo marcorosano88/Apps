@@ -560,7 +560,7 @@
           <output id="giorni-n" aria-live="polite"></output>
           <button type="button" class="piccolo sec" id="piu" aria-label="Un giorno in più" style="width:44px;min-height:44px">+</button></div></div>
       <div class="riga"><label for="orario" style="flex:1">Ora della notifica</label><input id="orario" type="time" style="width:auto;flex:none" value="${esc(imp.orario)}"></div>
-      <div class="riga"><label for="notifiche" style="flex:1">Notifiche di scadenza</label>
+      <div class="riga-switch"><label for="notifiche">Notifiche di scadenza</label>
         <input type="checkbox" id="notifiche" class="interruttore" role="switch"></div>
       <div class="stato-notifiche soft" id="stato-notifiche"></div>
       <div class="riga"><label for="tema" style="flex:1">Tema</label>

@@ -194,11 +194,14 @@ textarea { resize: vertical; min-height: 100px; }
 .copyright { text-align: center; font-style: italic; margin-top: 24px; color: var(--text-soft); }
 .stato-notifiche { font-size: 14px; }
 /* Interruttore (stile "swipe") */
-.interruttore { appearance: none; -webkit-appearance: none; flex: none; width: 52px; height: 32px; min-height: 0; padding: 0; border: 0; border-radius: 16px; background: #9e9e9e; position: relative; cursor: pointer; transition: background .15s; }
-.interruttore::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); transition: transform .15s; }
+/* Come l'interruttore di Gestione Orto (riquadro, etichetta a sinistra, interruttore piccolo a destra) ma nel viola di Mangiami Prima */
+.riga-switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+.riga-switch label { flex: 1; }
+.interruttore, .riga-switch > .interruttore { appearance: none; -webkit-appearance: none; flex: 0 0 46px; width: 46px; min-width: 46px; max-width: 46px; height: 28px; min-height: 0; padding: 0; border: 0; border-radius: 14px; background: #9e9e9e; position: relative; transition: background .15s; }
+.interruttore::after { content: ""; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0, 0, 0, .3); }
 .interruttore:checked { background: var(--primary); }
-.interruttore:checked::after { transform: translateX(20px); }
-.interruttore:disabled { opacity: .5; cursor: default; }
+.interruttore:checked::after { transform: translateX(18px); }
+.interruttore:disabled { opacity: .5; }
 
 /* ---------- Spinner, scanner, dialogo ---------- */
 .spinner { width: 28px; height: 28px; margin: 0 auto; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: gira .8s linear infinite; }

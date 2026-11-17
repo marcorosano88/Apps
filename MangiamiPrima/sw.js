@@ -1,5 +1,5 @@
 /* Mangiami Prima - service worker. Incrementare VERSIONE a ogni modifica dei file dell'app. */
-const VERSIONE = 'v1.3.4';
+const VERSIONE = 'v1.3.6';
 const CACHE = `mangiamiprima-${VERSIONE}`;
 const FILE = [
   './',

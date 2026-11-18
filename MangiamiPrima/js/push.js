@@ -53,9 +53,15 @@
 
   async function sottoscrizione(crea) {
     const reg = await navigator.serviceWorker.ready;
+    const chiave = chiaveDaBase64(VAPID_PUBBLICA);
     let sub = await reg.pushManager.getSubscription();
+    // Una sottoscrizione creata con un'altra chiave VAPID non e' piu' valida: va rifatta.
+    if (sub && sub.options && sub.options.applicationServerKey) {
+      const att = new Uint8Array(sub.options.applicationServerKey);
+      if (att.length !== chiave.length || att.some((b, i) => b !== chiave[i])) { await sub.unsubscribe(); sub = null; }
+    }
     if (!sub && crea) {
-      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chiaveDaBase64(VAPID_PUBBLICA) });
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chiave });
     }
     return sub;
   }

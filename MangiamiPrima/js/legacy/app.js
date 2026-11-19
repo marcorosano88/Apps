@@ -250,8 +250,42 @@ function _iterableToArrayLimit(r, t) { var e = null == r ? null : "undefined" !=
     trentun: 31
   };
 
-  /** Es. "sette dicembre 2026" -> '2026-12-07'; null se non riconosciuta. */
+  var DECINE = { venti: 20, trenta: 30, quaranta: 40, cinquanta: 50, sessanta: 60, settanta: 70, ottanta: 80, novanta: 90 };
+  var UNITA = { uno: 1, due: 2, tre: 3, 'tré': 3, quattro: 4, cinque: 5, sei: 6, sette: 7, otto: 8, nove: 9 };
+
+  /** "ventotto" -> 28, "trentatré" -> 33, "dodici" -> 12; null se non riconosciuto (0-99). */
+  function numeroInLettere(s) {
+    if (s in NUMERI) return NUMERI[s];
+    for (var d in DECINE) {
+      var radice = d.slice(0, -1);
+      if (s === d) return DECINE[d];
+      if (s.indexOf(radice) === 0) {
+        var r = s.slice(radice.length).replace(/^[ai]/, '');
+        if (r in UNITA) return DECINE[d] + UNITA[r];
+      }
+    }
+    return null;
+  }
+
+  /** Anno da "2028", "2.028", "2 028" o "duemilaventotto" / "duemila ventotto"; null se assente. */
+  function annoDaTesto(testo) {
+    var t = testo.toLowerCase().replace(/(\d)[.\s](\d{3})\b/g, '$1$2');
+    var m = t.match(/\b(\d{4})\b/);
+    if (m) return m[1];
+    var w = t.replace(/duemila\s+(?:e\s+)?/, 'duemila').match(/duemila([a-zàèéìòù]*)/);
+    if (!w) return null;
+    if (!w[1]) return '2000';
+    var n = numeroInLettere(w[1]);
+    return n === null ? null : String(2000 + n);
+  }
+
+  /** Es. "sette dicembre 2026" o "7/12/2026" -> '2026-12-07'; null se non riconosciuta. */
   function estraiDataDaVoce(testo) {
+    var num = testo.match(/\b(\d{1,2})\s*[\/\-. ]\s*(\d{1,2})\s*[\/\-. ]\s*(\d{4})\b/);
+    if (num) {
+      var isoNum = num[3] + '-' + String(num[2]).padStart(2, '0') + '-' + String(num[1]).padStart(2, '0');
+      if (date.valida(isoNum)) return isoNum;
+    }
     var parole = testo.toLowerCase().split(/[ \t\n',.]+/).filter(Boolean);
     var iMese = parole.findIndex(function (p) {
       return p in MESI;
@@ -266,9 +300,9 @@ function _iterableToArrayLimit(r, t) { var e = null == r ? null : "undefined" !=
       } else if (parole[i] in NUMERI) giorno = NUMERI[parole[i]];
     }
     if (!giorno) return null;
-    var m = testo.match(/\b(\d{4})\b/);
-    if (!m) return null;
-    var iso = "".concat(m[1], "-").concat(String(mese).padStart(2, '0'), "-").concat(String(giorno).padStart(2, '0'));
+    var anno = annoDaTesto(testo);
+    if (!anno) return null;
+    var iso = "".concat(anno, "-").concat(String(mese).padStart(2, '0'), "-").concat(String(giorno).padStart(2, '0'));
     return date.valida(iso) ? iso : null;
   }
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -641,7 +675,7 @@ function _iterableToArrayLimit(r, t) { var e = null == r ? null : "undefined" !=
                   break;
                 }
                 _context3.n = 1;
-                return avviso('Permesso negato', "E' necessario il permesso microfono / riconoscimento vocale per acquisire la data a voce.");
+                return ev.error === 'service-not-allowed' ? avviso('Riconoscimento vocale non disponibile', "Il servizio di dettatura del dispositivo non e' attivo. Su iPhone/iPad vai in Impostazioni > Generali > Tastiera e attiva 'Abilita dettatura', poi controlla che Siri sia attivo in Impostazioni > Siri. In alternativa usa il microfono della tastiera.") : avviso('Permesso microfono negato', "Consenti l'accesso al microfono per questo sito (su iPhone/iPad: Impostazioni > Safari > Microfono, oppure elimina i dati del sito in Impostazioni > Safari > Avanzate > Dati dei siti web e riprova).");
               case 1:
                 _context3.n = 5;
                 break;

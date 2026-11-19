@@ -130,8 +130,42 @@
     venticinque: 25, ventisei: 26, ventisette: 27, ventotto: 28, ventinove: 29, trenta: 30, trentuno: 31, trentun: 31
   };
 
-  /** Es. "sette dicembre 2026" -> '2026-12-07'; null se non riconosciuta. */
+  const DECINE = { venti: 20, trenta: 30, quaranta: 40, cinquanta: 50, sessanta: 60, settanta: 70, ottanta: 80, novanta: 90 };
+  const UNITA = { uno: 1, due: 2, tre: 3, 'tré': 3, quattro: 4, cinque: 5, sei: 6, sette: 7, otto: 8, nove: 9 };
+
+  /** "ventotto" -> 28, "trentatré" -> 33, "dodici" -> 12; null se non riconosciuto (0-99). */
+  function numeroInLettere(s) {
+    if (s in NUMERI) return NUMERI[s];
+    for (const d in DECINE) {
+      const radice = d.slice(0, -1);
+      if (s === d) return DECINE[d];
+      if (s.startsWith(radice)) {
+        const r = s.slice(radice.length).replace(/^[ai]/, '');
+        if (r in UNITA) return DECINE[d] + UNITA[r];
+      }
+    }
+    return null;
+  }
+
+  /** Anno da "2028", "2.028", "2 028" o "duemilaventotto" / "duemila ventotto"; null se assente. */
+  function annoDaTesto(testo) {
+    const t = testo.toLowerCase().replace(/(\d)[.\s](\d{3})\b/g, '$1$2');
+    const m = t.match(/\b(\d{4})\b/);
+    if (m) return m[1];
+    const w = t.replace(/duemila\s+(?:e\s+)?/, 'duemila').match(/duemila([a-zàèéìòù]*)/);
+    if (!w) return null;
+    if (!w[1]) return '2000';
+    const n = numeroInLettere(w[1]);
+    return n === null ? null : String(2000 + n);
+  }
+
+  /** Es. "sette dicembre 2026" o "7/12/2026" -> '2026-12-07'; null se non riconosciuta. */
   function estraiDataDaVoce(testo) {
+    const num = testo.match(/\b(\d{1,2})\s*[\/\-. ]\s*(\d{1,2})\s*[\/\-. ]\s*(\d{4})\b/);
+    if (num) {
+      const isoNum = `${num[3]}-${num[2].padStart(2, '0')}-${num[1].padStart(2, '0')}`;
+      if (date.valida(isoNum)) return isoNum;
+    }
     const parole = testo.toLowerCase().split(/[ \t\n',.]+/).filter(Boolean);
     const iMese = parole.findIndex((p) => p in MESI);
     if (iMese < 0) return null;
@@ -142,9 +176,9 @@
       else if (parole[i] in NUMERI) giorno = NUMERI[parole[i]];
     }
     if (!giorno) return null;
-    const m = testo.match(/\b(\d{4})\b/);
-    if (!m) return null;
-    const iso = `${m[1]}-${String(mese).padStart(2, '0')}-${String(giorno).padStart(2, '0')}`;
+    const anno = annoDaTesto(testo);
+    if (!anno) return null;
+    const iso = `${anno}-${String(mese).padStart(2, '0')}-${String(giorno).padStart(2, '0')}`;
     return date.valida(iso) ? iso : null;
   }
 
@@ -324,7 +358,8 @@
       rec.onerror = async (ev) => {
         gestito = true;
         fine(); // su Safari dopo un errore (es. permesso negato) onend puo' non arrivare: spegni subito spinner ed evidenziazione
-        if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') await avviso('Permesso negato', "E' necessario il permesso microfono / riconoscimento vocale per acquisire la data a voce.");
+        if (ev.error === 'service-not-allowed') await avviso('Riconoscimento vocale non disponibile', "Il servizio di dettatura del dispositivo non e' attivo. Su iPhone/iPad vai in Impostazioni > Generali > Tastiera e attiva 'Abilita dettatura', poi controlla che Siri sia attivo in Impostazioni > Siri. In alternativa usa il microfono della tastiera.");
+        else if (ev.error === 'not-allowed') await avviso('Permesso microfono negato', "Consenti l'accesso al microfono per questo sito (su iPhone/iPad: Impostazioni > Safari > Microfono, oppure elimina i dati del sito in Impostazioni > Safari > Avanzate > Dati dei siti web e riprova).");
         else if (ev.error === 'no-speech') await avviso('Attenzione', 'Non ho capito, riprova.');
         else if (ev.error !== 'aborted') await avviso('Errore', `Impossibile acquisire la data a voce (${ev.error}).`);
       };

@@ -42,7 +42,7 @@
   function applicaTema() {
     const t = store.impostazioni().tema;
     const r = document.documentElement;
-    if (t === 'chiaro' || t === 'scuro') r.dataset.tema = t; else delete r.dataset.tema;
+    if (t === 'chiaro' || t === 'scuro') r.setAttribute('data-tema', t); else r.removeAttribute('data-tema');
     const scuro = t === 'scuro' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     document.querySelectorAll('meta[name="theme-color"]').forEach((m) => { m.content = scuro ? '#1f1f1f' : '#ffffff'; });
   }

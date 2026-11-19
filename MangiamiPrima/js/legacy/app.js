@@ -104,7 +104,7 @@ function _iterableToArrayLimit(r, t) { var e = null == r ? null : "undefined" !=
   function applicaTema() {
     var t = store.impostazioni().tema;
     var r = document.documentElement;
-    if (t === 'chiaro' || t === 'scuro') r.dataset.tema = t;else delete r.dataset.tema;
+    if (t === 'chiaro' || t === 'scuro') r.setAttribute('data-tema', t);else r.removeAttribute('data-tema');
     var scuro = t === 'scuro' || t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches;
     document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
       m.content = scuro ? '#1f1f1f' : '#ffffff';

@@ -269,9 +269,11 @@ function _iterableToArrayLimit(r, t) { var e = null == r ? null : "undefined" !=
 
   /** Anno da "2028", "2.028", "2 028" o "duemilaventotto" / "duemila ventotto"; null se assente. */
   function annoDaTesto(testo) {
-    var t = testo.toLowerCase().replace(/(\d)[.\s](\d{3})\b/g, '$1$2');
+    var t = testo.toLowerCase().replace(/(\d)[.\s](\d{3})\b/g, '$1$2').replace(/\b(?:due|de|2)\s*mila/g, 'duemila');
     var m = t.match(/\b(\d{4})\b/);
     if (m) return m[1];
+    var d2 = t.match(/\bduemila\s*(?:e\s*)?(\d{1,2})\b/) || t.match(/\b20\s(\d{2})\b/);
+    if (d2) return String(2000 + parseInt(d2[1], 10));
     var w = t.replace(/duemila\s+(?:e\s+)?/, 'duemila').match(/duemila([a-zàèéìòù]*)/);
     if (!w) return null;
     if (!w[1]) return '2000';

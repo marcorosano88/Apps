@@ -635,6 +635,7 @@ function _iterableToArrayLimit(r, t) { var e = null == r ? null : "undefined" !=
             while (1) switch (_context3.n) {
               case 0:
                 gestito = true;
+                fine(); // su Safari dopo un errore (es. permesso negato) onend puo' non arrivare: spegni subito spinner ed evidenziazione
                 if (!(ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) {
                   _context3.n = 2;
                   break;

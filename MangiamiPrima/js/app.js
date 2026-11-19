@@ -323,6 +323,7 @@
       };
       rec.onerror = async (ev) => {
         gestito = true;
+        fine(); // su Safari dopo un errore (es. permesso negato) onend puo' non arrivare: spegni subito spinner ed evidenziazione
         if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') await avviso('Permesso negato', "E' necessario il permesso microfono / riconoscimento vocale per acquisire la data a voce.");
         else if (ev.error === 'no-speech') await avviso('Attenzione', 'Non ho capito, riprova.');
         else if (ev.error !== 'aborted') await avviso('Errore', `Impossibile acquisire la data a voce (${ev.error}).`);

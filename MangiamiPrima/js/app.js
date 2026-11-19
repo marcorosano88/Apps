@@ -653,7 +653,11 @@
   }
 
   applicaTema();
-  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applicaTema);
+  if (window.matchMedia) {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    if (mq.addEventListener) mq.addEventListener('change', applicaTema);
+    else if (mq.addListener) mq.addListener(applicaTema); // Safari < 14
+  }
   route();
   MP.push.avvia();
   MP.notifiche.avvia();

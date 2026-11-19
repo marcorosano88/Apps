@@ -38,10 +38,29 @@
 
   <noscript><p style="padding:20px">Mangiami Prima richiede JavaScript.</p></noscript>
 
-  <script src="js/store.js"></script>
-  <script src="js/servizi.js"></script>
-  <script src="js/push.js"></script>
-  <script src="js/notifiche.js"></script>
-  <script src="js/app.js"></script>
+  <script>
+    /* Browser vecchi (es. Safari di iOS 9/10): niente async/await, ??, fetch...: carica la build transpilata in js/legacy/. */
+    (function () {
+      var moderno = true;
+      try { new Function('async function f(){ await 1; } var a = null; a ?? 1; var o = {}; ({ ...o });'); } catch (e) { moderno = false; }
+      if (/[?&]legacy\b/.test(location.search)) moderno = false; // per provare la build vecchia da un browser moderno
+      var base = moderno ? 'js/' : 'js/legacy/';
+      var elenco = ['store', 'servizi', 'push', 'notifiche', 'app'];
+      if (!moderno) {
+        elenco.unshift('polyfill');
+        document.write('<link rel="stylesheet" href="css/legacy.css">');
+      }
+      for (var i = 0; i < elenco.length; i++) document.write('<script src="' + base + elenco[i] + '.js"><\/script>');
+      window.onerror = function (msg, src, riga) {
+        var v = document.getElementById('vista');
+        if (v && !v.firstChild) {
+          var p = document.createElement('p');
+          p.style.cssText = 'padding:20px;color:#b00020;word-break:break-word';
+          p.textContent = 'Errore: ' + msg + ' (' + String(src).split('/').pop() + ':' + riga + ')';
+          v.appendChild(p);
+        }
+      };
+    })();
+  </script>
 </body>
 </html>

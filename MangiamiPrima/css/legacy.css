@@ -1,0 +1,23 @@
+/* Compatibilita' per Safari vecchi (iOS 9/10): niente grid, env(), min(), <dialog> nativo. */
+.barra { padding: 26px 12px 8px; min-height: 70px; }
+#vista { padding: 20px 20px 28px; }
+.home { display: block; }
+.home > * { margin-bottom: 22px; }
+dialog { display: none; position: fixed; top: 50%; left: 50%; -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%);
+  width: 92vw; max-width: 380px; z-index: 1000; box-sizing: border-box; }
+dialog[open] { display: block; }
+dialog[open]::after { content: ''; }
+
+/* grid -> flexbox */
+.testata, .prodotto, .elemento { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
+.testata > :nth-child(1), .prodotto > :nth-child(1) { -webkit-flex: 0 0 84px; flex: 0 0 84px; }
+.testata > :nth-child(2), .prodotto > :nth-child(2) { -webkit-flex: 1 1 auto; flex: 1 1 auto; min-width: 0; }
+.testata > :nth-child(3), .prodotto > :nth-child(3) { -webkit-flex: 0 0 92px; flex: 0 0 92px; }
+.elemento > :nth-child(2) { -webkit-flex: 1 1 auto; flex: 1 1 auto; min-width: 0; }
+.elemento > * { margin-right: 8px; }
+.ricetta, .impostazioni { display: block; }
+.ricetta > * { margin-bottom: 8px; }
+.impostazioni > * { margin-bottom: 15px; }
+
+/* gap dei flexbox */
+.riga > * + *, .stepper > * + *, .nome > * + *, .dialogo-bottoni > * + *, .qta .bottoni > * + *, .banner .azioni > * + * { margin-left: 8px; }

@@ -338,7 +338,7 @@
       const rec = new SR();
       recognition = rec;
       rec.lang = 'it-IT';
-      rec.interimResults = false;
+      rec.interimResults = true; // su iOS il risultato finale a volte non arriva: usa l'ultimo parziale
       rec.maxAlternatives = 3;
       btn.disabled = false;
       btn.style.outline = '3px solid var(--accent)';
@@ -351,23 +351,33 @@
         btn.style.outline = '';
         el('spin').hidden = !inRicerca;
       };
-      rec.onresult = async (ev) => {
+      const traccia = []; // eventi ricevuti: aiuta a capire perche' non e' arrivato testo
+      ['audiostart', 'soundstart', 'speechstart', 'speechend', 'soundend', 'audioend', 'nomatch'].forEach((n) => { rec['on' + n] = () => traccia.push(n); });
+      const dettaglio = () => ` [${traccia.join(', ') || 'nessun evento audio'}]`;
+      let ultimiAlt = null;
+      const elabora = async (alt) => {
         gestito = true;
-        const alt = Array.from(ev.results[0] || []);
         let data = null;
         for (const a of alt) { data = estraiDataDaVoce(a.transcript); if (data) break; }
         if (data) impostaScadenza(data);
-        else await avviso('Attenzione', alt[0] ? `Non sono riuscito a riconoscere una data valida da: "${alt[0].transcript}".` : 'Non ho capito, riprova.');
+        else await avviso('Attenzione', alt[0] ? `Non sono riuscito a riconoscere una data valida da: "${alt[0].transcript}".` : 'Non ho capito, riprova.' + dettaglio());
+      };
+      rec.onresult = async (ev) => {
+        const ultimo = ev.results[ev.results.length - 1];
+        const alt = Array.from(ultimo || []);
+        if (!alt.length) return;
+        ultimiAlt = alt;
+        if (ultimo.isFinal && !gestito) await elabora(alt);
       };
       rec.onerror = async (ev) => {
         gestito = true;
         fine(); // su Safari dopo un errore (es. permesso negato) onend puo' non arrivare: spegni subito spinner ed evidenziazione
         if (ev.error === 'service-not-allowed') await avviso('Riconoscimento vocale non disponibile', "Il servizio di dettatura del dispositivo non e' attivo. Su iPhone/iPad vai in Impostazioni > Generali > Tastiera e attiva 'Abilita dettatura', poi controlla che Siri sia attivo in Impostazioni > Siri. In alternativa usa il microfono della tastiera.");
         else if (ev.error === 'not-allowed') await avviso('Permesso microfono negato', "Consenti l'accesso al microfono per questo sito (su iPhone/iPad: Impostazioni > Safari > Microfono, oppure elimina i dati del sito in Impostazioni > Safari > Avanzate > Dati dei siti web e riprova).");
-        else if (ev.error === 'no-speech') await avviso('Attenzione', 'Non ho capito, riprova.');
+        else if (ev.error === 'no-speech') await avviso('Attenzione', 'Non ho sentito nulla, riprova.' + dettaglio());
         else if (ev.error !== 'aborted') await avviso('Errore', `Impossibile acquisire la data a voce (${ev.error}).`);
       };
-      rec.onend = async () => { const g = gestito; fine(); if (!g) await avviso('Attenzione', 'Non ho capito, riprova.'); };
+      rec.onend = async () => { const g = gestito; fine(); if (g) return; if (ultimiAlt) await elabora(ultimiAlt); else await avviso('Attenzione', 'Non ho capito, riprova.' + dettaglio()); };
       try { rec.start(); } catch (e) { fine(); avviso('Errore', 'Impossibile avviare il riconoscimento vocale.'); }
     });
 

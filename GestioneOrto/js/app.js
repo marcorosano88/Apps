@@ -92,7 +92,7 @@
   // ---------- Tema ----------
   GO.applicaTema = () => {
     const t = S.set().tema;
-    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
   };
 
   // ---------- Notifiche all'apertura ----------

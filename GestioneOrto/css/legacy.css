@@ -1,0 +1,15 @@
+/* Compatibilita' per Safari vecchi (iOS 9/10): niente env(), grid, gap nei flexbox. */
+:root { --sat: 20px; --sab: 0px; --sal: 0px; --sar: 0px; }
+
+/* grid -> flexbox */
+.cal { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+.cal > * { -webkit-flex: 0 0 calc((100% - 118px) / 12); flex: 0 0 calc((100% - 118px) / 12); box-sizing: border-box; }
+.cal > .cal-n { -webkit-flex: 0 0 118px; flex: 0 0 118px; }
+.tbl { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+.tbl > * { -webkit-flex: 0 0 25%; flex: 0 0 25%; box-sizing: border-box; }
+
+/* gap dei flexbox -> margini */
+.top > * + *, .fld.inl > * + *, .fld.chk > * + *, .pick-i > * + *, .legenda > * + * { margin-left: 8px; }
+.dlg-b > * + *, .seg > * + * { margin-left: 8px; }
+.row-gap > *, .pg-riga > * { margin: 0 8px 8px 0; }
+.form > * + *, .fld > * + * { margin-top: 8px; }

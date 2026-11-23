@@ -116,9 +116,30 @@
     } catch (e) { /* ignore */ }
   };
 
+  // ---------- Conferma pioggia dal pulsante della notifica ----------
+  /** tag = pioggia-AAAA-MM-GG-lat_lon (creato da controlla-pioggia): segna annaffiate le verdure degli orti di quel luogo. */
+  GO.confermaPioggia = (tag) => {
+    const m = /^pioggia-(\d{4}-\d{2}-\d{2})-(-?\d+\.\d+)_(-?\d+\.\d+)$/.exec(tag || '');
+    if (!m) return;
+    if (m[1] !== L.iso(L.today())) { UI.toast('L\'avviso è di un altro giorno: conferma dalla scheda Attività.'); return; }
+    const suffisso = `_${m[2]}_${m[3]}`;
+    const ids = S.orti().filter((o) => { const p = L.posizione(o); return p && L.suffissoLuogo(p) === suffisso; }).map((o) => o.id);
+    const n = ids.length ? S.segnaAnnaffiateDallaPioggia(L.today(), ids) : 0;
+    UI.toast(n ? `${n} verdure segnate come annaffiate` : 'Niente da aggiornare');
+    GO.render();
+  };
+  const pioggiaDaIndirizzo = () => {
+    const q = new URLSearchParams(parseHash().query);
+    const tag = q.get('pioggia');
+    if (!tag) return;
+    location.replace('#/attivita'); // toglie il parametro: un ricaricamento non deve confermare di nuovo
+    GO.confermaPioggia(tag);
+  };
+
   // ---------- Service worker ----------
   const registraSW = () => {
     if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+    navigator.serviceWorker.addEventListener('message', (e) => { if (e.data && e.data.tipo === 'pioggia') GO.confermaPioggia(e.data.tag); });
     const aveva = !!navigator.serviceWorker.controller;
     let ricarica = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -143,6 +164,7 @@
       TABS.map((t) => h('button', { 'data-id': t.id, onclick: () => GO.nav.tab(t.hash), 'aria-label': t.lb }, h('span', { class: 'ic', text: t.ic }), h('span', { class: 'lb', text: t.lb })))));
     app.append(h('header', { class: 'top' }, $back, $title), $main, $fab, $tabs);
     window.addEventListener('hashchange', () => GO.render());
+    pioggiaDaIndirizzo(); // prima del primo render: apertura dal pulsante «Sì, ha piovuto» con l'app chiusa
     GO.render();
     registraSW();
     if (S.erroreSalvataggio) UI.toast(S.erroreSalvataggio);

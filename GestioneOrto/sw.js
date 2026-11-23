@@ -1,5 +1,5 @@
 /* Gestione Orto PWA - service worker: cache offline di tutti gli asset dell'app. Cambia VERSION a ogni rilascio. */
-const VERSION = '1.2.4';
+const VERSION = '1.2.5';
 const CACHE = `gestione-orto-${VERSION}`;
 const ASSETS = [
   './',
@@ -73,15 +73,23 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
   let d = {};
   try { d = event.data ? event.data.json() : {}; } catch (e) { d = { corpo: event.data ? event.data.text() : '' }; }
-  event.waitUntil(self.registration.showNotification(d.titolo || 'Gestione Orto', {
-    body: d.corpo || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: d.tag || 'promemoria-orto', lang: 'it',
-  }));
+  const tag = d.tag || 'promemoria-orto';
+  const opzioni = { body: d.corpo || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag, lang: 'it', data: { tag } };
+  // Avviso pioggia: pulsante di conferma dove il browser lo supporta (Android/Chrome, desktop; non su iPhone)
+  if (/^pioggia-/.test(tag)) opzioni.actions = [{ action: 'pioggia', title: 'Sì, ha piovuto' }];
+  event.waitUntil(self.registration.showNotification(d.titolo || 'Gestione Orto', opzioni));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const tag = event.notification.data && event.notification.data.tag;
+  const conferma = event.action === 'pioggia' && tag; // il service worker non legge i dati dell'orto: li aggiorna l'app
   event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
-    for (const c of list) if ('focus' in c) return c.focus();
-    return self.clients.openWindow('./index.html#/attivita');
+    for (const c of list) {
+      if (!('focus' in c)) continue;
+      if (conferma) c.postMessage({ tipo: 'pioggia', tag });
+      return c.focus();
+    }
+    return self.clients.openWindow(conferma ? `./index.html#/attivita?pioggia=${encodeURIComponent(tag)}` : './index.html#/attivita');
   }));
 });

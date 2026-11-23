@@ -141,10 +141,30 @@
       const sub = await sottoscrizione(true);
       await rpc('push_sincronizza',{ p_id: idDispositivo(), p_subscription: sub.toJSON(), p_promemoria: await programmati() });
       scrivi(CH_DA_INVIARE, '0');
+      await sincronizzaPioggia(); // dopo: il dispositivo deve già esistere sul server
     } catch (e) {
       console.warn('Sincronizzazione promemoria non riuscita:', e);
       scrivi(CH_DA_INVIARE, '1'); // riprova al ritorno della rete / alla prossima modifica
     }
+  }
+
+  /** Comunica al server i luoghi degli orti e la soglia di pioggia: il server controlla il meteo anche con l'app chiusa
+      e manda «Sta piovendo?». Senza luoghi o con il controllo disattivato il server smette di controllare.
+      Un errore qui (es. 03-pioggia.sql non ancora eseguito) non deve bloccare i promemoria normali. */
+  async function sincronizzaPioggia() {
+    try {
+      const set = S.set();
+      const luoghi = [], visti = new Set();
+      if (set.pioggiaOraria && set.annAttiva) {
+        for (const o of S.orti()) {
+          const p = L.posizione(o);
+          if (!p || visti.has(L.suffissoLuogo(p))) continue;
+          visti.add(L.suffissoLuogo(p));
+          luoghi.push({ nome: p.localita || '', lat: p.lat, lon: p.lon });
+        }
+      }
+      await rpc('push_meteo', { p_id: idDispositivo(), p_luoghi: luoghi, p_soglia: luoghi.length ? Number(set.pioggiaSoglia) || 5 : null });
+    } catch (e) { console.warn('Sincronizzazione avviso pioggia non riuscita:', e); }
   }
 
   /** Raggruppa modifiche ravvicinate in un solo invio. */

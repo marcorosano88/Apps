@@ -12,11 +12,6 @@
   GO.supabase = { url: PUSH_URL, key: PUSH_KEY }; // usato anche da store.js per il servizio prezzi
   const VAPID_PUBBLICA = 'BLkxXKXkJdpcS5-ab3BBx3gzFlmCQkZBrcEZlHBnwYmCov1teb6Y9qBNeiDOtvruLY2n_BrHiWb0ySQt1EYBVuw'; // coppia propria di Gestione Orto
 
-  const GIORNI_AVANTI = 14; // come l'app nativa: annaffiatura, gelo, concimazione per i prossimi 14 giorni
-  const GIORNI_RACCOLTA = 45; // raccolta e trapianto: piu' avanti, perche' sono eventi singoli
-  const MAX_PROMEMORIA = 150;
-  const ORA_GELO = '18:00'; // la sera prima della notte fredda, come l'app nativa
-
   const CH_ID = 'gestioneorto.push.id';
   const CH_ATTIVO = 'gestioneorto.push.attivo';
   const CH_DA_INVIARE = 'gestioneorto.push.daInviare';
@@ -69,67 +64,10 @@
   // ---------------------------------------------------------------------
   // Calcolo dei promemoria programmati
   // ---------------------------------------------------------------------
-  const istante = (giorno, hhmm) => {
-    const [h, m] = String(hhmm || '09:00').split(':').map(Number);
-    return new Date(giorno.getFullYear(), giorno.getMonth(), giorno.getDate(), h || 0, m || 0, 0);
-  };
-
-  /** Elenco { tag, quando (ISO UTC), titolo, testo } dei promemoria futuri, come li programmerebbe l'app nativa. */
+  /** Elenco { tag, quando (ISO UTC), titolo, testo } dei promemoria futuri, come li programmerebbe l'app nativa (calcolo in promemoria.js). */
   async function programmati() {
-    const set = S.set();
-    const adesso = new Date();
-    const oggi = L.today();
     const meteoDi = await ST.meteoPerOrti(S.orti(), false); // usa la cache se ha meno di un'ora
-    const out = [];
-    const aggiungi = (quando, tag, titolo, testo) => {
-      if (quando <= adesso) return;
-      out.push({ tag, quando: quando.toISOString(), titolo, testo });
-    };
-    const verdura = (a) => a.titolo.replace(/^\S+\s+\S+\s+/, '');
-    const emoji = (a) => a.titolo.split(' ')[0];
-
-    // Raccolta (N giorni prima) e trapianto (nel giorno): eventi singoli, uno per pianta
-    const att = L.costruisciAttivita(S.db, oggi, meteoDi, set.annGiorni);
-    if (set.promAttivo) {
-      for (const a of att.filter((x) => x.tipo === 'raccogli')) {
-        const giorno = L.add(a.data, -set.promGiorni);
-        if (L.diff(giorno, oggi) > GIORNI_RACCOLTA) continue;
-        const quanto = set.promGiorni === 0 ? 'oggi' : set.promGiorni === 1 ? 'domani' : `fra ${set.promGiorni} giorni`;
-        aggiungi(istante(giorno, set.promOra), `racc-${a.coltId}-${L.iso(a.data)}`, `${emoji(a)} ${verdura(a)} quasi pronta`,
-          `Raccolta stimata ${quanto} (${L.fmt(a.data)}) · ${a.posto}`);
-      }
-    }
-    if (set.trapiantoAttivo) {
-      for (const a of att.filter((x) => x.tipo === 'trapianta')) {
-        if (L.diff(a.data, oggi) > GIORNI_RACCOLTA) continue;
-        aggiungi(istante(a.data, set.promOra), `trap-${a.coltId}-${L.iso(a.data)}`, `${emoji(a)} ${verdura(a)} pronta da trapiantare`,
-          `È il momento di trapiantare (${a.posto}).`);
-      }
-    }
-
-    // Annaffiatura, concimazione e gelo: una notifica al giorno con l'elenco di quel giorno
-    for (let i = 0; i < GIORNI_AVANTI; i++) {
-      const giorno = L.add(oggi, i);
-      const iso = L.iso(giorno);
-      const avvisi = await V.calcolaAvvisi(meteoDi, giorno);
-      const di = (icona) => avvisi.find((a) => a.icona === icona);
-      const ann = di('💧'), conc = di('🧪'), gelo = di('❄️');
-      if (ann) aggiungi(istante(giorno, set.annOra), `ann-${iso}`, '💧 Da annaffiare', ann.righe.join('\n'));
-      if (conc) aggiungi(istante(giorno, set.promOra), `conc-${iso}`, '🧪 Da concimare', conc.righe.join('\n'));
-      if (gelo) aggiungi(istante(giorno, ORA_GELO), `gelo-${iso}`, '❄️ Rischio gelo stanotte', `Domattina proteggi con tessuto non tessuto o un telo:\n${gelo.righe.join('\n')}`);
-    }
-
-    // Semina: il primo giorno dei prossimi 3 mesi
-    if (set.seminaAttiva) {
-      for (let k = 1; k <= 3; k++) {
-        const primo = new Date(oggi.getFullYear(), oggi.getMonth() + k, 1);
-        const sem = (await V.calcolaAvvisi(meteoDi, primo)).find((a) => a.icona === '🌱');
-        if (sem) aggiungi(istante(primo, set.promOra), `sem-${L.iso(primo)}`, `🌱 ${sem.titolo}`, `${sem.righe.join('\n')}\nApri «Attività» → «Cosa seminare» per vedere dove.`);
-      }
-    }
-
-    out.sort((a, b) => a.quando.localeCompare(b.quando));
-    return out.slice(0, MAX_PROMEMORIA);
+    return GO.programmati(meteoDi);
   }
 
   // ---------------------------------------------------------------------
@@ -142,6 +80,7 @@
       await rpc('push_sincronizza',{ p_id: idDispositivo(), p_subscription: sub.toJSON(), p_promemoria: await programmati() });
       scrivi(CH_DA_INVIARE, '0');
       await sincronizzaPioggia(); // dopo: il dispositivo deve già esistere sul server
+      await sincronizzaCollegamento();
     } catch (e) {
       console.warn('Sincronizzazione promemoria non riuscita:', e);
       scrivi(CH_DA_INVIARE, '1'); // riprova al ritorno della rete / alla prossima modifica
@@ -165,6 +104,19 @@
       }
       await rpc('push_meteo', { p_id: idDispositivo(), p_luoghi: luoghi, p_soglia: luoghi.length ? Number(set.pioggiaSoglia) || 5 : null });
     } catch (e) { console.warn('Sincronizzazione avviso pioggia non riuscita:', e); }
+  }
+
+  /** Comunica al server il codice di sincronizzazione (se attiva) e il fuso orario: con i dati sul server la funzione
+      «aggiorna-promemoria» ricalcola ogni 3 ore i promemoria con il meteo aggiornato, anche con l'app chiusa.
+      Senza sincronizzazione il codice è null e il server non ricalcola nulla per questo dispositivo. Un errore qui
+      (es. 05-meteo-background.sql non ancora eseguito) non deve bloccare i promemoria normali. */
+  async function sincronizzaCollegamento() {
+    try {
+      const codice = GO.sync && GO.sync.attivo() ? GO.sync.codice() : null;
+      let fuso = null;
+      try { fuso = Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch (e) { /* lascia null: il server usa Europe/Rome */ }
+      await rpc('push_collega_dati', { p_id: idDispositivo(), p_codice: codice, p_fuso: fuso });
+    } catch (e) { console.warn('Collegamento dati per il meteo in background non riuscito:', e); }
   }
 
   /** Raggruppa modifiche ravvicinate in un solo invio. */

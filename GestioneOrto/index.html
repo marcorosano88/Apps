@@ -33,6 +33,7 @@
       if (/[?&]legacy/.test(location.search)) moderno = false; // per provare la build vecchia da un browser moderno
       var base = moderno ? 'js/' : 'js/legacy/';
       var elenco = ['data', 'logic', 'store', 'ui', 'views', 'forms', 'app', 'push'];
+      if (moderno) { elenco.splice(3, 0, 'promemoria'); elenco.push('sync'); } // promemoria: calcolo avvisi (dopo store); sync: sincronizzazione tra dispositivi
       if (!moderno) {
         elenco.unshift('polyfill');
         document.write('<link rel="stylesheet" href="css/legacy.css">');

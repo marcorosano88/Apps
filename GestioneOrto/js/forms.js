@@ -8,7 +8,7 @@
   const back = (p) => GO.nav.back(p);
   const ALTRA = 'Altra verdura…';
   const parseQuery = (q) => { const o = {}; new URLSearchParams(q || '').forEach((v, k) => (o[k] = v)); return o; };
-  GO.VERSION = '1.2.0'; // tenere uguale a VERSION in sw.js
+  GO.VERSION = '1.4.0'; // tenere uguale a VERSION in sw.js
 
   const bottoniForm = (annulla, salva, label) => h('div', { class: 'row-gap form-b' },
     h('button', { type: 'button', class: 'btn', onclick: annulla, text: 'Annulla' }),
@@ -704,7 +704,7 @@
     root.append(sec('💧 Promemoria di annaffiatura'),
       sw('Ricordami di annaffiare', 'annAttiva'), num('Ogni quanti giorni (1-30)', 'annGiorni', 1, 30), ora('Orario della notifica', 'annOra'),
       sw('🌦️ Adatta a verdura e meteo', 'annIntelligente'),
-      UI.note('Ogni verdura ha il suo intervallo (i pomodori più spesso delle cipolle), più frequente per le piantine appena messe. Il meteo della città di ciascun orto (Open-Meteo) conta la pioggia come annaffiatura, rimanda se domani piove e anticipa se fa molto caldo. Serre e tunnel ignorano la pioggia. Le previsioni si aggiornano quando apri l\'app.', 'small'),
+      UI.note('Ogni verdura ha il suo intervallo (i pomodori più spesso delle cipolle), più frequente per le piantine appena messe. Il meteo della città di ciascun orto (Open-Meteo) conta la pioggia come annaffiatura, rimanda se domani piove e anticipa se fa molto caldo. Serre e tunnel ignorano la pioggia. Le previsioni si aggiornano quando apri l\'app e, con la sincronizzazione e le notifiche attive, ogni 3 ore anche con l\'app chiusa (il server ricalcola i promemoria con il meteo nuovo).', 'small'),
       sw('🌧️ Controlla la pioggia di oggi', 'pioggiaOraria'), num('Soglia di pioggia in mm (1-30)', 'pioggiaSoglia', 1, 30),
       UI.note('Quando apri l\'app, somma la pioggia caduta oggi (Open-Meteo, della città di ciascun orto: se piove a Firenze segna solo gli orti di Firenze). Superata la soglia, nella scheda Attività ti chiede «Sta piovendo?»: con «Sì» le piante nei solchi e nelle aiuole rialzate risultano annaffiate. Con le notifiche attive te lo ricorda anche con l\'app chiusa (il server controlla il meteo ogni 30 minuti, dalle 6 alle 23, al massimo una volta al giorno per luogo); dove il telefono lo permette la notifica ha il pulsante «Sì, ha piovuto», altrimenti toccandola si apre l\'app. Serve la città dell\'orto («Modifica orto»).', 'small'));
 
@@ -724,13 +724,69 @@
       sw('Avvisami quando concimare', 'concimazioneAttiva'),
       UI.note('Ogni giorno (all\'orario dei promemoria di raccolta) elenca le piante da concimare e con cosa: pomodori, peperoni, melanzane e zucchine a intervalli, cavoli e bietola una volta sola. Si azzera quando registri un concime sulla pianta o sul solco. Piano indicativo.', 'small'));
 
+    // Sincronizzazione tra dispositivi (js/sync.js; non c'è nella build per browser vecchi)
+    const sy = GO.sync;
+    if (sy) {
+      root.append(sec('🔄 Sincronizzazione'));
+      const sezione = h('div');
+      root.append(sezione);
+      const copia = async () => {
+        try { await navigator.clipboard.writeText(sy.codice()); UI.toast('Codice copiato'); }
+        catch (e) { await UI.alert('Codice di sincronizzazione', sy.codice()); }
+      };
+      const disegna = () => {
+        UI.clear(sezione);
+        sy.alCambioStato = null;
+        if (!sy.attivo()) {
+          sezione.append(
+            UI.note('Con la sincronizzazione telefono, tablet e computer usano gli stessi dati: una modifica fatta su un dispositivo compare sugli altri alla successiva apertura. Senza, i dati restano solo su questo dispositivo. I dati sono copiati su Supabase e protetti da un codice segreto: chi conosce il codice può leggere e modificare i dati, quindi non condividerlo.', 'small'),
+            h('div', { class: 'row-gap' },
+              h('button', { class: 'btn small primary', text: '🔄 Attiva la sincronizzazione', onclick: async () => {
+                if (!(await UI.confirm('Attiva la sincronizzazione', 'Orti, verdure, raccolti, spese e impostazioni di questo dispositivo verranno copiati sul server. Riceverai un codice segreto per collegare gli altri dispositivi.', { ok: 'Attiva' }))) return;
+                const ok = await sy.attiva();
+                disegna();
+                if (!ok) await UI.alert('Sincronizzazione attivata, ma…', 'Non sono riuscito a caricare i dati sul server (rete o servizio non raggiungibile). Riproverò appena possibile.');
+              } }),
+              h('button', { class: 'btn small', text: '🔗 Collega a un altro dispositivo…', onclick: async () => {
+                const c = await UI.prompt('Collega a un altro dispositivo', 'Incolla il codice di sincronizzazione mostrato nelle Impostazioni dell\'altro dispositivo.', { ok: 'Collega', placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', cap: 'none' });
+                if (!c) return;
+                const r = await sy.collega(c, (i) => UI.confirm('Sostituire i dati di questo dispositivo?', `Qui ci sono già dei dati: il collegamento li sostituisce con quelli dell'altro dispositivo (${i.orti} orti, ${i.verdure} verdure). Esporta prima un backup se vuoi conservarli.`, { ok: 'Sostituisci', danger: true }));
+                if (r.ok) { GO.applicaTema(); UI.toast('Dispositivo collegato'); disegna(); }
+                else if (!r.annullato) await UI.alert('Collegamento non riuscito', r.errore);
+              } })));
+        } else {
+          const stato = UI.note(sy.testo() || '…', 'small');
+          sy.alCambioStato = (t) => { stato.textContent = t; };
+          sezione.append(
+            UI.note('Questo dispositivo usa dati condivisi. Per collegarne un altro: Impostazioni → Sincronizzazione → «Collega a un altro dispositivo» e incolla questo codice. Chi lo conosce può leggere e modificare i tuoi dati: non condividerlo.', 'small'),
+            h('div', { class: 'card' }, h('div', { class: 'row-s', text: 'Codice di sincronizzazione' }), h('div', { class: 'row-t', style: { wordBreak: 'break-all', userSelect: 'all' }, text: sy.codice() })),
+            stato,
+            h('div', { class: 'row-gap' },
+              h('button', { class: 'btn small', text: '📋 Copia codice', onclick: copia }),
+              h('button', { class: 'btn small', text: '🔄 Sincronizza ora', onclick: async () => { await sy.sincronizzaOra(); if (sy.attivo()) stato.textContent = sy.testo(); else disegna(); } }),
+              h('button', { class: 'btn small', text: '⛓️‍💥 Scollega questo dispositivo', onclick: async () => {
+                if (!(await UI.confirm('Scollega questo dispositivo', 'I dati restano su questo dispositivo e sul server, ma da ora non vengono più sincronizzati. Potrai ricollegarti con lo stesso codice.', { ok: 'Scollega' }))) return;
+                await sy.scollega(false); disegna(); UI.toast('Dispositivo scollegato');
+              } }),
+              h('button', { class: 'btn small danger', text: '🗑️ Cancella dal server e scollega', onclick: async () => {
+                if (!(await UI.confirm('Cancella dal server', 'I dati sul server vengono cancellati e gli altri dispositivi collegati non potranno più sincronizzare con questo codice. Qui i dati restano.', { ok: 'Cancella dal server', danger: true }))) return;
+                const r = await sy.scollega(true);
+                if (!r.ok) { await UI.alert('Operazione non riuscita', r.errore); return; }
+                disegna(); UI.toast('Dati cancellati dal server');
+              } })));
+        }
+      };
+      disegna();
+    }
+
     root.append(sec('💾 Dati'),
-      UI.note('I dati sono salvati solo su questo dispositivo (nel browser). Esporta un backup JSON per conservarli o spostarli su un altro dispositivo.', 'small'),
+      UI.note(sy && sy.attivo() ? 'Con la sincronizzazione attiva i dati sono anche sul server. Il backup JSON resta utile come copia di sicurezza.' : 'I dati sono salvati solo su questo dispositivo (nel browser). Esporta un backup JSON per conservarli o spostarli su un altro dispositivo, oppure attiva la sincronizzazione qui sopra.', 'small'),
       h('div', { class: 'row-gap' },
         h('button', { class: 'btn small', text: '⬇️ Esporta dati (JSON)', onclick: () => salvaFile(`gestione-orto-${L.iso(new Date())}.json`, S.esporta()) }),
         h('button', { class: 'btn small', text: '⬆️ Importa dati…', onclick: () => fileInput.click() }),
         h('button', { class: 'btn small danger', text: '🗑️ Cancella tutti i dati', onclick: async () => {
-          if (!(await UI.confirm('Cancella tutti i dati', 'Verranno eliminati orti, verdure, raccolti, spese e impostazioni di questo dispositivo. Esporta prima un backup se vuoi conservarli.', { ok: 'Cancella tutto', danger: true }))) return;
+          const sinc = sy && sy.attivo() ? ' La sincronizzazione è attiva: i dati verranno cancellati anche sul server e sugli altri dispositivi collegati (per cancellare solo da qui, prima scollega il dispositivo).' : '';
+          if (!(await UI.confirm('Cancella tutti i dati', `Verranno eliminati orti, verdure, raccolti, spese e impostazioni di questo dispositivo. Esporta prima un backup se vuoi conservarli.${sinc}`, { ok: 'Cancella tutto', danger: true }))) return;
           S.azzera(); GO.applicaTema(); UI.toast('Dati cancellati');
         } })));
     const fileInput = h('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => {

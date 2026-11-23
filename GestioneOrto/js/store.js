@@ -253,6 +253,28 @@
   };
   S.azzera = () => { S.db = vuoto(); S.save(); };
 
+  // ---------- Sincronizzazione (vedi sync.js) ----------
+  /** Impostazioni che restano proprie di ogni dispositivo e non vengono né inviate né sovrascritte. */
+  const IMPOSTAZIONI_LOCALI = ['tema', 'notificheBrowser'];
+  /** Copia dei dati da inviare al server: senza la cache del meteo e senza le impostazioni del singolo dispositivo. */
+  S.snapshot = () => {
+    const copia = JSON.parse(JSON.stringify(Object.assign({}, S.db, { meteo: {} })));
+    IMPOSTAZIONI_LOCALI.forEach((k) => delete copia.settings[k]);
+    return copia;
+  };
+  /** Sostituisce i dati con quelli arrivati dal server, tenendo meteo e impostazioni locali. */
+  S.applicaRemoto = (dati) => {
+    const meteo = S.db.meteo, locali = S.db.settings;
+    const nuovo = normalizza(dati);
+    nuovo.meteo = meteo || {};
+    IMPOSTAZIONI_LOCALI.forEach((k) => { if (locali[k] !== undefined) nuovo.settings[k] = locali[k]; });
+    S.db = nuovo;
+    S.salvaOra();
+    if (S.onChange) S.onChange();
+  };
+  /** Nessun dato "vero" (i prezzi in cache non contano): serve a non confondere un dispositivo appena installato con uno cancellato. */
+  S.senzaDati = () => !['orti', 'coltivazioni', 'spese', 'raccolti'].some((t) => S.db[t].length);
+
   // ---------- Rete: meteo, città, quota, prezzi ----------
   const ST = (GO.net = {});
   const conTimeout = async (url, ms = 9000) => {

@@ -206,6 +206,43 @@
   };
   D.SUGGERIMENTI_CONCIMI = ['Concime di cavallo', 'Pollina', 'Letame bovino', 'Compost', 'Humus di lombrico', 'Pacciamatura (paglia)', 'Pacciamatura (telo)', 'Cenere', 'Cornunghia', 'Macerato di ortica', 'Calce', 'Sabbia'];
 
+  // Strutture proposte per una verdura (il nome può comunque essere libero).
+  D.STRUTTURE = ['Sostegno con canne', 'Tutore singolo / paletto', 'Telo', 'Rete', 'Rete ombreggiante', 'Tessuto non tessuto (TNT)'];
+
+  // Promemoria "Aggiungi struttura": per le verdure che crescono in altezza, una volta sola dopo N giorni dalla messa a dimora.
+  D.SUGGERIMENTI_STRUTTURE = {
+    Pomodoro: {
+      struttura: D.STRUTTURE[1],
+      giorni: 10,
+      consiglio: 'cresce in altezza e si piega sotto il peso dei frutti: un tutore e una legatura ogni tanto lo tengono dritto.'
+    },
+    Peperone: {
+      struttura: D.STRUTTURE[1],
+      giorni: 21,
+      consiglio: 'con i frutti pesanti i rami si spezzano facilmente: meglio un tutore prima che sia tardi.'
+    },
+    Peperoncino: {
+      struttura: D.STRUTTURE[1],
+      giorni: 21,
+      consiglio: 'con i frutti i rami si piegano: un tutore li sostiene.'
+    },
+    Melanzana: {
+      struttura: D.STRUTTURE[1],
+      giorni: 21,
+      consiglio: 'i frutti pesanti piegano la pianta: un tutore la tiene dritta.'
+    },
+    Fagiolino: {
+      struttura: D.STRUTTURE[0],
+      giorni: 7,
+      consiglio: 'se è un rampicante ha bisogno di canne o di una rete su cui arrampicarsi.'
+    },
+    Cetriolo: {
+      struttura: D.STRUTTURE[0],
+      giorni: 10,
+      consiglio: 'cresce meglio in verticale: canne o una rete tengono i frutti puliti e sani.'
+    }
+  };
+
   // Compagnia: verdura -> [amici, nemici]
   D.COMPAGNIA = {
     Pomodoro: [['Basilico', 'Carota', 'Prezzemolo', 'Cipolla', 'Aglio', 'Lattuga', 'Sedano'], ['Patata', 'Finocchio', 'Cavolfiore', 'Broccolo', 'Cavolo nero']],

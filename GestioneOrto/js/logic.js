@@ -230,7 +230,35 @@
   };
   L.eConcime = (s) => {
     s = String(s).trim().toLowerCase();
-    return !(s.startsWith('pacciamatura') || s === 'calce' || s === 'sabbia' || s === 'cenere');
+    return !(s.startsWith('pacciamatura') || L.eStruttura(s) || s === 'calce' || s === 'sabbia' || s === 'cenere');
+  };
+  // Le strutture (canne, telo, rete…) sono salvate in trattVerdura con questo prefisso: niente cambi al database, e non contano come concimi.
+  L.PREFISSO_STRUTTURA = 'Struttura: ';
+  L.eStruttura = (s) => String(s).trim().toLowerCase().startsWith(L.PREFISSO_STRUTTURA.toLowerCase());
+  L.nomeSalvatoStruttura = (nome) => L.PREFISSO_STRUTTURA + String(nome).trim();
+  L.nomeStruttura = (s) => (L.eStruttura(s) ? String(s).trim().slice(L.PREFISSO_STRUTTURA.length).trim() : String(s).trim());
+  /** Suggerimento { struttura, giorni, consiglio } per le verdure che crescono in altezza, altrimenti null. */
+  L.suggerimentoStruttura = (verdura) => {
+    const k = String(verdura).trim().toLowerCase();
+    const nome = Object.keys(D.SUGGERIMENTI_STRUTTURE).find((x) => x.toLowerCase() === k);
+    return nome ? D.SUGGERIMENTI_STRUTTURE[nome] : null;
+  };
+  /** Giorno dell'avviso "serve una struttura?", oppure null se non serve (nessun suggerimento o struttura già registrata). Può essere già passato. */
+  L.dataAvvisoStruttura = (c, voci) => {
+    if (!L.suggerimentoStruttura(c.verdura) || voci.some((t) => t.coltId === c.id && L.eStruttura(t.sostanza))) return null;
+    return L.add(L.parse(c.data), L.suggerimentoStruttura(c.verdura).giorni);
+  };
+  L.descriviStruttura = (t) => `${L.nomeStruttura(t.sostanza)} (${L.fmtS(t.data)})`;
+  /** Riga di riepilogo: l'ultima data di ogni struttura, es. "Rete (20/03/2026), Telo (01/04/2026)". */
+  L.riepilogoStrutture = (voci) => {
+    const m = new Map();
+    for (const t of voci) {
+      if (!L.eStruttura(t.sostanza)) continue;
+      const k = L.nomeStruttura(t.sostanza).toLowerCase();
+      const cur = m.get(k);
+      if (!cur || t.data > cur.data || (t.data === cur.data && t.id > cur.id)) m.set(k, t);
+    }
+    return Array.from(m.values()).sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : 0)).map(L.descriviStruttura).join(', ');
   };
   L.descriviTratt = (t) => (t.note === 'Coltura rimossa' ? `🌱 ${t.sostanza} (messa il ${L.fmtS(t.data)})` : `${t.sostanza} (${L.fmtS(t.data)})`);
 
@@ -302,7 +330,7 @@
     for (const t of tratt) if (t.solco > m) m = t.solco;
     return m;
   };
-  L.dettagliColt = (c, luogo, concimi, raccolti) => {
+  L.dettagliColt = (c, luogo, concimi, raccolti, strutture) => {
     const giorni = L.diff(L.today(), L.parse(c.data));
     const quando = giorni <= 0 ? 'oggi' : giorni === 1 ? '1 giorno fa' : `${giorni} giorni fa`;
     const r = [];
@@ -317,6 +345,7 @@
     if (dist.length) r.push(`Distanze: ${dist.join(', ')}`);
     if (c.ultimaAnn) r.push(`💧 Annaffiata il ${L.fmtS(c.ultimaAnn)}`);
     if (concimi && concimi.length) r.push(`🧪 ${concimi.map((t) => `${t.sostanza} (${L.fmtS(t.data)})`).join(', ')}`);
+    if (strutture && strutture.length) r.push(`🏗️ ${strutture.map(L.descriviStruttura).join(', ')}`);
     if (raccolti && raccolti.length) r.push(L.totaliRaccolti(raccolti));
     if (c.note && c.note.trim()) r.push(c.note.trim());
     return r.join('\n');

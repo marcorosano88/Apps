@@ -724,6 +724,10 @@
       sw('Avvisami quando concimare', 'concimazioneAttiva'),
       UI.note('Ogni giorno (all\'orario dei promemoria di raccolta) elenca le piante da concimare e con cosa: pomodori, peperoni, melanzane e zucchine a intervalli, cavoli e bietola una volta sola. Si azzera quando registri un concime sulla pianta o sul solco. Piano indicativo.', 'small'));
 
+    root.append(sec('🏗️ Promemoria di strutture'),
+      sw('Avvisami quando mettere il sostegno', 'struttureAttive'),
+      UI.note('Una volta sola, qualche giorno dopo la messa a dimora di pomodori, peperoni, peperoncini, melanzane, fagiolini e cetrioli (all\'orario dei promemoria di raccolta), ti ricorda di aggiungere un tutore o delle canne. Non parte se hai già registrato una struttura sulla pianta (menu della verdura → Aggiungi struttura) né per le piantine ancora in vaschetta alveolare.', 'small'));
+
     // Sincronizzazione tra dispositivi (js/sync.js; non c'è nella build per browser vecchi)
     const sy = GO.sync;
     if (sy) {

@@ -35,6 +35,38 @@
     S.addRiga('trattVerdura', { ortoId: c.ortoId, coltId: c.id, sostanza: nome, data });
     return true;
   };
+  /** Aggiunge una struttura (canne, telo, rete…) alla verdura. Salvata in trattVerdura col prefisso di L.PREFISSO_STRUTTURA. */
+  V.aggiungiStrutturaVerdura = async (c) => {
+    let nome = await UI.sheet(`Che struttura aggiungi a ${c.verdura}?`, D.STRUTTURE.concat(['Altro…']), { cancel: 'Annulla' });
+    if (!nome) return false;
+    if (nome === 'Altro…') {
+      nome = await UI.prompt('Altra struttura', 'Nome della struttura:', { ok: 'Avanti', validate: (v) => (v ? null : 'Scrivi il nome della struttura.') });
+      if (!nome) return false;
+    }
+    nome = nome.trim();
+    const data = await UI.askDate(`Data di installazione: ${nome}`, L.iso(L.today()));
+    if (!data) return false;
+    S.addRiga('trattVerdura', { ortoId: c.ortoId, coltId: c.id, sostanza: L.nomeSalvatoStruttura(nome), data });
+    return true;
+  };
+  V.modificaStrutturaVerdura = async (c, strutture) => {
+    const i = await scegliVoce(`Modifica quale struttura di ${c.verdura}?`, strutture.map(L.descriviStruttura));
+    if (i < 0) return false;
+    const nome = await UI.prompt('Modifica struttura', 'Nome della struttura:', { value: L.nomeStruttura(strutture[i].sostanza), ok: 'Avanti', validate: (v) => (v ? null : 'Scrivi il nome della struttura.') });
+    if (!nome) return false;
+    const data = await UI.askDate(`Data di installazione: ${nome.trim()}`, strutture[i].data);
+    if (!data) return false;
+    strutture[i].sostanza = L.nomeSalvatoStruttura(nome);
+    strutture[i].data = data;
+    S.save();
+    return true;
+  };
+  V.eliminaStrutturaVerdura = async (c, strutture) => {
+    const i = await scegliVoce(`Elimina quale struttura di ${c.verdura}?`, strutture.map(L.descriviStruttura));
+    if (i < 0) return false;
+    S.delRiga('trattVerdura', strutture[i].id);
+    return true;
+  };
   const scegliVoce = async (titolo, etichette) => {
     const i = await UI.sheet(titolo, etichette.map((e, i) => ({ label: e, value: i })), { cancel: 'Annulla' });
     return i == null ? -1 : i;
@@ -77,16 +109,20 @@
   V.menuVerdura = async (coltId) => {
     const c = S.get('coltivazioni', coltId);
     if (!c) return false;
-    const concimi = L.sortBy(S.db.trattVerdura.filter((t) => t.coltId === c.id), (t) => t.data);
+    const voceVerdura = L.sortBy(S.db.trattVerdura.filter((t) => t.coltId === c.id), (t) => t.data);
+    const concimi = voceVerdura.filter((t) => !L.eStruttura(t.sostanza));
+    const strutture = voceVerdura.filter((t) => L.eStruttura(t.sostanza));
     const raccolti = L.sortBy(S.db.raccolti.filter((r) => r.coltId === c.id), (r) => r.data, (r) => r.id);
     const cont = c.oggettoId != null ? S.get('oggetti', c.oggettoId) : null;
     const luogo = `${nomeOrto(c.ortoId)} · ${cont ? cont.nome : c.solco > 0 ? `solco ${c.solco}` : 'senza posto'}`;
-    const titolo = `${L.emoji(c.verdura)} ${c.verdura}${c.tipologia ? ' ' + c.tipologia : ''}\n${L.dettagliColt(c, luogo, concimi, raccolti)}`;
+    const titolo = `${L.emoji(c.verdura)} ${c.verdura}${c.tipologia ? ' ' + c.tipologia : ''}\n${L.dettagliColt(c, luogo, concimi, raccolti, strutture)}`;
     const voci = [
       { label: '💧 Annaffiata oggi', value: 'ann' }, { label: "💧 Annaffiata in un'altra data…", value: 'annd' },
       { label: '🧪 Aggiungi concime / sostanza', value: 'cadd' },
     ];
     if (concimi.length) voci.push({ label: '🧪 Modifica un concime', value: 'cmod' }, { label: '🧪 Elimina un concime', value: 'cdel' });
+    voci.push({ label: '🏗️ Aggiungi struttura', value: 'sadd' });
+    if (strutture.length) voci.push({ label: '🏗️ Modifica una struttura', value: 'smod' }, { label: '🏗️ Elimina una struttura', value: 'sdel' });
     voci.push({ label: '🧺 Registra un raccolto', value: 'radd' });
     if (raccolti.length) voci.push({ label: '🧺 Modifica un raccolto', value: 'rmod' }, { label: '🧺 Elimina un raccolto', value: 'rdel' });
     voci.push({ label: '🌱 Trapianta…', value: 'trap' }, { label: 'Modifica', value: 'mod' }, { label: 'Elimina', value: 'del', danger: true });
@@ -95,6 +131,9 @@
       case 'ann': c.ultimaAnn = L.iso(L.today()); S.save(); return true;
       case 'annd': { const d = await UI.askDate("Data dell'annaffiatura", c.ultimaAnn || L.iso(L.today())); if (!d) return false; c.ultimaAnn = d; S.save(); return true; }
       case 'cadd': return V.aggiungiConcimeVerdura(c);
+      case 'sadd': return V.aggiungiStrutturaVerdura(c);
+      case 'smod': return V.modificaStrutturaVerdura(c, strutture);
+      case 'sdel': return V.eliminaStrutturaVerdura(c, strutture);
       case 'cmod': {
         const i = await scegliVoce(`Modifica quale voce di ${c.verdura}?`, concimi.map((t) => `${t.sostanza} (${L.fmtS(t.data)})`));
         if (i < 0) return false;
@@ -748,7 +787,10 @@
       if (c.ultimaAnn) t += ` · 💧 Annaffiato il ${L.fmtS(c.ultimaAnn)}`;
       const haR = (racc.get(c.id) || []).length > 0;
       if (!haR && L.trova(c.verdura)) t += ` · 🧺 ~${L.fmt(L.add(L.parse(c.data), L.giorniAlRaccolto(c)))}`;
-      if ((concimi.get(c.id) || []).length) t += `\n🧪 ${L.ultimiConcimiPerTipo(concimi.get(c.id))}`;
+      const soloConcimi = (concimi.get(c.id) || []).filter((x) => !L.eStruttura(x.sostanza));
+      if (soloConcimi.length) t += `\n🧪 ${L.ultimiConcimiPerTipo(soloConcimi)}`;
+      const strutt = L.riepilogoStrutture(concimi.get(c.id) || []);
+      if (strutt) t += `\n🏗️ ${strutt}`;
       if (haR) t += `\n${L.totaliRaccolti(racc.get(c.id))}`;
       return UI.chip(t, conf ? COL.conflitto : COL.pianta, '#000', () => V.menuVerdura(c.id));
     };

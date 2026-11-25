@@ -141,6 +141,62 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       return _ref2.apply(this, arguments);
     };
   }();
+  /** Aggiunge una struttura (canne, telo, rete…) alla verdura. Salvata in trattVerdura col prefisso di L.PREFISSO_STRUTTURA. */
+  V.aggiungiStrutturaVerdura = function (c) {
+    return UI.sheet("Che struttura aggiungi a ".concat(c.verdura, "?"), D.STRUTTURE.concat(['Altro…']), {
+      cancel: 'Annulla'
+    }).then(function (nome) {
+      if (!nome) return null;
+      if (nome !== 'Altro…') return nome;
+      return UI.prompt('Altra struttura', 'Nome della struttura:', {
+        ok: 'Avanti',
+        validate: function validate(v) {
+          return v ? null : 'Scrivi il nome della struttura.';
+        }
+      });
+    }).then(function (nome) {
+      if (!nome) return false;
+      nome = nome.trim();
+      return UI.askDate("Data di installazione: ".concat(nome), L.iso(L.today())).then(function (data) {
+        if (!data) return false;
+        S.addRiga('trattVerdura', {
+          ortoId: c.ortoId,
+          coltId: c.id,
+          sostanza: L.nomeSalvatoStruttura(nome),
+          data: data
+        });
+        return true;
+      });
+    });
+  };
+  V.modificaStrutturaVerdura = function (c, strutture) {
+    return scegliVoce("Modifica quale struttura di ".concat(c.verdura, "?"), strutture.map(L.descriviStruttura)).then(function (i) {
+      if (i < 0) return false;
+      return UI.prompt('Modifica struttura', 'Nome della struttura:', {
+        value: L.nomeStruttura(strutture[i].sostanza),
+        ok: 'Avanti',
+        validate: function validate(v) {
+          return v ? null : 'Scrivi il nome della struttura.';
+        }
+      }).then(function (nome) {
+        if (!nome) return false;
+        return UI.askDate("Data di installazione: ".concat(nome.trim()), strutture[i].data).then(function (data) {
+          if (!data) return false;
+          strutture[i].sostanza = L.nomeSalvatoStruttura(nome);
+          strutture[i].data = data;
+          S.save();
+          return true;
+        });
+      });
+    });
+  };
+  V.eliminaStrutturaVerdura = function (c, strutture) {
+    return scegliVoce("Elimina quale struttura di ".concat(c.verdura, "?"), strutture.map(L.descriviStruttura)).then(function (i) {
+      if (i < 0) return false;
+      S.delRiga('trattVerdura', strutture[i].id);
+      return true;
+    });
+  };
   var scegliVoce = /*#__PURE__*/function () {
     var _scegliVoce = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3(titolo, etichette) {
       var i;
@@ -329,7 +385,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
   /** Menu che si apre toccando una verdura. Ritorna true se qualcosa è cambiato. */
   V.menuVerdura = /*#__PURE__*/function () {
     var _ref6 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8(coltId) {
-      var c, concimi, raccolti, cont, luogo, titolo, voci, s, d, i, n, _i, _i2, _i3, _t;
+      var c, voceVerdura, concimi, strutture, raccolti, cont, luogo, titolo, voci, s, d, i, n, _i, _i2, _i3, _t;
       return _regenerator().w(function (_context8) {
         while (1) switch (_context8.n) {
           case 0:
@@ -340,10 +396,16 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             }
             return _context8.a(2, false);
           case 1:
-            concimi = L.sortBy(S.db.trattVerdura.filter(function (t) {
+            voceVerdura = L.sortBy(S.db.trattVerdura.filter(function (t) {
               return t.coltId === c.id;
             }), function (t) {
               return t.data;
+            });
+            concimi = voceVerdura.filter(function (t) {
+              return !L.eStruttura(t.sostanza);
+            });
+            strutture = voceVerdura.filter(function (t) {
+              return L.eStruttura(t.sostanza);
             });
             raccolti = L.sortBy(S.db.raccolti.filter(function (r) {
               return r.coltId === c.id;
@@ -354,7 +416,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             });
             cont = c.oggettoId != null ? S.get('oggetti', c.oggettoId) : null;
             luogo = "".concat(nomeOrto(c.ortoId), " · ").concat(cont ? cont.nome : c.solco > 0 ? "solco ".concat(c.solco) : 'senza posto');
-            titolo = "".concat(L.emoji(c.verdura), " ").concat(c.verdura).concat(c.tipologia ? ' ' + c.tipologia : '', "\n").concat(L.dettagliColt(c, luogo, concimi, raccolti));
+            titolo = "".concat(L.emoji(c.verdura), " ").concat(c.verdura).concat(c.tipologia ? ' ' + c.tipologia : '', "\n").concat(L.dettagliColt(c, luogo, concimi, raccolti, strutture));
             voci = [{
               label: '💧 Annaffiata oggi',
               value: 'ann'
@@ -371,6 +433,17 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             }, {
               label: '🧪 Elimina un concime',
               value: 'cdel'
+            });
+            voci.push({
+              label: '🏗️ Aggiungi struttura',
+              value: 'sadd'
+            });
+            if (strutture.length) voci.push({
+              label: '🏗️ Modifica una struttura',
+              value: 'smod'
+            }, {
+              label: '🏗️ Elimina una struttura',
+              value: 'sdel'
             });
             voci.push({
               label: '🧺 Registra un raccolto',
@@ -398,6 +471,9 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             return UI.sheet(titolo, voci);
           case 2:
             s = _context8.v;
+            if (s === 'sadd') return _context8.a(2, V.aggiungiStrutturaVerdura(c));
+            if (s === 'smod') return _context8.a(2, V.modificaStrutturaVerdura(c, strutture));
+            if (s === 'sdel') return _context8.a(2, V.eliminaStrutturaVerdura(c, strutture));
             _t = s;
             _context8.n = _t === 'ann' ? 3 : _t === 'annd' ? 4 : _t === 'cadd' ? 7 : _t === 'cmod' ? 8 : _t === 'cdel' ? 13 : _t === 'radd' ? 16 : _t === 'rmod' ? 17 : _t === 'rdel' ? 19 : _t === 'trap' ? 22 : _t === 'mod' ? 23 : _t === 'del' ? 24 : 25;
             break;
@@ -2917,7 +2993,12 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       if (c.ultimaAnn) t += " · 💧 Annaffiato il ".concat(L.fmtS(c.ultimaAnn));
       var haR = (racc.get(c.id) || []).length > 0;
       if (!haR && L.trova(c.verdura)) t += " · 🧺 ~".concat(L.fmt(L.add(L.parse(c.data), L.giorniAlRaccolto(c))));
-      if ((concimi.get(c.id) || []).length) t += "\n🧪 ".concat(L.ultimiConcimiPerTipo(concimi.get(c.id)));
+      var soloConcimi = (concimi.get(c.id) || []).filter(function (x) {
+        return !L.eStruttura(x.sostanza);
+      });
+      if (soloConcimi.length) t += "\n🧪 ".concat(L.ultimiConcimiPerTipo(soloConcimi));
+      var strutt = L.riepilogoStrutture(concimi.get(c.id) || []);
+      if (strutt) t += "\n🏗️ ".concat(strutt);
       if (haR) t += "\n".concat(L.totaliRaccolti(racc.get(c.id)));
       return UI.chip(t, conf ? COL.conflitto : COL.pianta, '#000', function () {
         return V.menuVerdura(c.id);

@@ -184,9 +184,42 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     return new Date(giorno.getFullYear(), giorno.getMonth(), giorno.getDate(), h || 0, m || 0, 0);
   };
 
+  /** Promemoria "serve una struttura?": uno per pianta, qualche giorno dopo la messa a dimora, se non ne ha ancora registrate. */
+  function programmatiStrutture() {
+    var set = S.set();
+    if (!set.struttureAttive) return [];
+    var adesso = new Date();
+    var oggi = L.today();
+    var out = [];
+    S.db.coltivazioni.forEach(function (c) {
+      var cont = c.oggettoId != null ? S.get('oggetti', c.oggettoId) : null;
+      if (cont && L.tipo(cont.tipo).conAlveoli) return;
+      var sugg = L.suggerimentoStruttura(c.verdura);
+      var giorno = L.dataAvvisoStruttura(c, S.db.trattVerdura);
+      var orto = S.orto(c.ortoId);
+      if (!sugg || !giorno || !orto || L.diff(giorno, oggi) > GIORNI_RACCOLTA) return;
+      var quando = istante(giorno, set.promOra);
+      if (quando <= adesso) return;
+      var luogo = cont ? cont.nome : c.solco > 0 ? "solco ".concat(c.solco) : 'senza posto';
+      out.push({
+        tag: "strut-".concat(c.id),
+        quando: quando.toISOString(),
+        titolo: "\uD83C\uDFD7\uFE0F ".concat(c.verdura, ": serve una struttura?"),
+        testo: "".concat(c.verdura, " (").concat(orto.nome, " \xB7 ").concat(luogo, "): ").concat(sugg.consiglio, " Suggerito: ").concat(sugg.struttura.toLowerCase(), ". Registrala dal menu della verdura \u2192 \xABAggiungi struttura\xBB.")
+      });
+    });
+    return out;
+  }
+
   /** Elenco { tag, quando (ISO UTC), titolo, testo } dei promemoria futuri, come li programmerebbe l'app nativa. */
   function programmati() {
-    return _programmati.apply(this, arguments);
+    return _programmati.apply(this, arguments).then(function (out) {
+      var extra = programmatiStrutture();
+      if (!extra.length) return out;
+      return out.concat(extra).sort(function (a, b) {
+        return a.quando.localeCompare(b.quando);
+      }).slice(0, MAX_PROMEMORIA);
+    });
   } // ---------------------------------------------------------------------
   // Sincronizzazione con Supabase
   // ---------------------------------------------------------------------

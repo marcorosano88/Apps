@@ -30,6 +30,7 @@ function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length)
     seminaAttiva: true,
     trapiantoAttivo: true,
     concimazioneAttiva: true,
+    struttureAttive: true,
     notificheBrowser: false,
     unitaPref: {}
   };

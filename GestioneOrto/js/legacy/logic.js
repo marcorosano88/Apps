@@ -551,7 +551,49 @@ function _iterableToArrayLimit(r, t) { var e = null == r ? null : "undefined" !=
   };
   L.eConcime = function (s) {
     s = String(s).trim().toLowerCase();
-    return !(s.startsWith('pacciamatura') || s === 'calce' || s === 'sabbia' || s === 'cenere');
+    return !(s.startsWith('pacciamatura') || L.eStruttura(s) || s === 'calce' || s === 'sabbia' || s === 'cenere');
+  };
+  // Le strutture (canne, telo, rete…) sono salvate in trattVerdura con questo prefisso: niente cambi al database, e non contano come concimi.
+  L.PREFISSO_STRUTTURA = 'Struttura: ';
+  L.eStruttura = function (s) {
+    return String(s).trim().toLowerCase().startsWith(L.PREFISSO_STRUTTURA.toLowerCase());
+  };
+  L.nomeSalvatoStruttura = function (nome) {
+    return L.PREFISSO_STRUTTURA + String(nome).trim();
+  };
+  L.nomeStruttura = function (s) {
+    return L.eStruttura(s) ? String(s).trim().slice(L.PREFISSO_STRUTTURA.length).trim() : String(s).trim();
+  };
+  /** Suggerimento { struttura, giorni, consiglio } per le verdure che crescono in altezza, altrimenti null. */
+  L.suggerimentoStruttura = function (verdura) {
+    var k = String(verdura).trim().toLowerCase();
+    var nome = Object.keys(D.SUGGERIMENTI_STRUTTURE).filter(function (x) {
+      return x.toLowerCase() === k;
+    })[0];
+    return nome ? D.SUGGERIMENTI_STRUTTURE[nome] : null;
+  };
+  /** Giorno dell'avviso "serve una struttura?", oppure null se non serve (nessun suggerimento o struttura già registrata). Può essere già passato. */
+  L.dataAvvisoStruttura = function (c, voci) {
+    if (!L.suggerimentoStruttura(c.verdura) || voci.some(function (t) {
+      return t.coltId === c.id && L.eStruttura(t.sostanza);
+    })) return null;
+    return L.add(L.parse(c.data), L.suggerimentoStruttura(c.verdura).giorni);
+  };
+  L.descriviStruttura = function (t) {
+    return "".concat(L.nomeStruttura(t.sostanza), " (").concat(L.fmtS(t.data), ")");
+  };
+  /** Riga di riepilogo: l'ultima data di ogni struttura, es. "Rete (20/03/2026), Telo (01/04/2026)". */
+  L.riepilogoStrutture = function (voci) {
+    var m = new Map();
+    voci.forEach(function (t) {
+      if (!L.eStruttura(t.sostanza)) return;
+      var k = L.nomeStruttura(t.sostanza).toLowerCase();
+      var cur = m.get(k);
+      if (!cur || t.data > cur.data || t.data === cur.data && t.id > cur.id) m.set(k, t);
+    });
+    return Array.from(m.values()).sort(function (a, b) {
+      return a.data < b.data ? -1 : a.data > b.data ? 1 : 0;
+    }).map(L.descriviStruttura).join(', ');
   };
   L.descriviTratt = function (t) {
     return t.note === 'Coltura rimossa' ? "🌱 ".concat(t.sostanza, " (messa il ").concat(L.fmtS(t.data), ")") : "".concat(t.sostanza, " (").concat(L.fmtS(t.data), ")");
@@ -703,7 +745,7 @@ function _iterableToArrayLimit(r, t) { var e = null == r ? null : "undefined" !=
     }
     return m;
   };
-  L.dettagliColt = function (c, luogo, concimi, raccolti) {
+  L.dettagliColt = function (c, luogo, concimi, raccolti, strutture) {
     var giorni = L.diff(L.today(), L.parse(c.data));
     var quando = giorni <= 0 ? 'oggi' : giorni === 1 ? '1 giorno fa' : "".concat(giorni, " giorni fa");
     var r = [];
@@ -720,6 +762,7 @@ function _iterableToArrayLimit(r, t) { var e = null == r ? null : "undefined" !=
     if (concimi && concimi.length) r.push("🧪 ".concat(concimi.map(function (t) {
       return "".concat(t.sostanza, " (").concat(L.fmtS(t.data), ")");
     }).join(', ')));
+    if (strutture && strutture.length) r.push("🏗️ ".concat(strutture.map(L.descriviStruttura).join(', ')));
     if (raccolti && raccolti.length) r.push(L.totaliRaccolti(raccolti));
     if (c.note && c.note.trim()) r.push(c.note.trim());
     return r.join('\n');

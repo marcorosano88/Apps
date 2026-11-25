@@ -123,6 +123,21 @@
       }
     }
 
+    // Strutture: un solo avviso per pianta, qualche giorno dopo la messa a dimora, se non ne ha ancora registrate
+    if (set.struttureAttive) {
+      for (const c of S.db.coltivazioni) {
+        const cont = c.oggettoId != null ? S.get('oggetti', c.oggettoId) : null;
+        if (cont && L.tipo(cont.tipo).conAlveoli) continue;
+        const sugg = L.suggerimentoStruttura(c.verdura);
+        const giorno = L.dataAvvisoStruttura(c, S.db.trattVerdura);
+        const orto = S.orto(c.ortoId);
+        if (!sugg || !giorno || !orto || L.diff(giorno, oggi) > GIORNI_RACCOLTA) continue;
+        const luogo = cont ? cont.nome : c.solco > 0 ? `solco ${c.solco}` : 'senza posto';
+        aggiungi(istante(giorno, set.promOra), `strut-${c.id}`, `🏗️ ${c.verdura}: serve una struttura?`,
+          `${c.verdura} (${orto.nome} · ${luogo}): ${sugg.consiglio} Suggerito: ${sugg.struttura.toLowerCase()}. Registrala dal menu della verdura → «Aggiungi struttura».`);
+      }
+    }
+
     // Annaffiatura, concimazione e gelo: una notifica al giorno con l'elenco di quel giorno
     for (let i = 0; i < GIORNI_AVANTI; i++) {
       const giorno = L.add(oggi, i);

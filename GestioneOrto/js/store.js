@@ -11,7 +11,7 @@
   S.SETTINGS_DEFAULT = {
     tema: 'auto', promAttivo: true, promGiorni: 2, promOra: '09:00', annAttiva: true, annGiorni: 3, annOra: '18:00',
     annIntelligente: true, pioggiaOraria: true, pioggiaSoglia: 5, geloAttivo: true, seminaAttiva: true, trapiantoAttivo: true,
-    concimazioneAttiva: true, notificheBrowser: false, unitaPref: {},
+    concimazioneAttiva: true, struttureAttive: true, notificheBrowser: false, unitaPref: {},
   };
 
   const vuoto = () => {

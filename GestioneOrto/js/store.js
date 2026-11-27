@@ -236,8 +236,17 @@
     S.db.trattSolco = S.db.trattSolco.filter((t) => t.oggettoId !== id);
     S.save();
   };
-  S.addRiga = (tabella, riga) => { riga.id = S.id(); S.db[tabella].push(riga); S.save(); return riga; };
-  S.delRiga = (tabella, id) => { S.db[tabella] = S.db[tabella].filter((x) => x.id !== id); S.save(); };
+  // Verdure che con il raccolto spariscono dall'orto (la pianta viene tolta): il raccolto scala le piantine.
+  const SI_TOGLIE = ['cipolla', 'porro', 'aglio', 'aglione', 'scalogno', 'carota', 'ravanello', 'rapa', 'barbabietola', 'patata', 'finocchio', 'sedano', 'lattuga', 'radicchio', 'cicoria', 'indivia', 'cavolfiore', 'cavolo cappuccio', 'verza', 'cavolo rapa', 'cime di rapa'];
+  /** verso -1: un raccolto toglie piantine; +1: annulla l'effetto (raccolto modificato o eliminato). Conta solo se in pz o cespi. */
+  S.aggiustaPiantine = (r, verso) => {
+    if (!r || r.numero == null || (r.unita !== 'pz' && r.unita !== 'cespi') || SI_TOGLIE.indexOf(String(r.verdura).trim().toLowerCase()) < 0) return;
+    const c = S.get('coltivazioni', r.coltId);
+    if (!c || c.quantita == null) return;
+    c.quantita = Math.max(0, c.quantita + verso * Math.floor(r.numero));
+  };
+  S.addRiga = (tabella, riga) => { riga.id = S.id(); S.db[tabella].push(riga); if (tabella === 'raccolti') S.aggiustaPiantine(riga, -1); S.save(); return riga; };
+  S.delRiga = (tabella, id) => { if (tabella === 'raccolti') S.aggiustaPiantine(S.get('raccolti', id), 1); S.db[tabella] = S.db[tabella].filter((x) => x.id !== id); S.save(); };
 
   // ---------- Backup ----------
   S.esporta = () => {

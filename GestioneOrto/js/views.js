@@ -100,7 +100,9 @@
   V.modificaRaccoltoVoce = async (r) => {
     const n = await formRaccolto(r.verdura, r);
     if (!n) return false;
+    S.aggiustaPiantine(r, 1);
     Object.assign(r, n);
+    S.aggiustaPiantine(r, -1);
     S.save();
     return true;
   };

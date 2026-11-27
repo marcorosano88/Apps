@@ -548,13 +548,23 @@ function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length)
     });
     S.save();
   };
+  // Verdure che con il raccolto spariscono dall'orto (la pianta viene tolta): il raccolto scala le piantine.
+  var SI_TOGLIE = ['cipolla', 'porro', 'aglio', 'aglione', 'scalogno', 'carota', 'ravanello', 'rapa', 'barbabietola', 'patata', 'finocchio', 'sedano', 'lattuga', 'radicchio', 'cicoria', 'indivia', 'cavolfiore', 'cavolo cappuccio', 'verza', 'cavolo rapa', 'cime di rapa'];
+  S.aggiustaPiantine = function (r, verso) {
+    if (!r || r.numero == null || r.unita !== 'pz' && r.unita !== 'cespi' || SI_TOGLIE.indexOf(String(r.verdura).trim().toLowerCase()) < 0) return;
+    var c = S.get('coltivazioni', r.coltId);
+    if (!c || c.quantita == null) return;
+    c.quantita = Math.max(0, c.quantita + verso * Math.floor(r.numero));
+  };
   S.addRiga = function (tabella, riga) {
     riga.id = S.id();
     S.db[tabella].push(riga);
+    if (tabella === 'raccolti') S.aggiustaPiantine(riga, -1);
     S.save();
     return riga;
   };
   S.delRiga = function (tabella, id) {
+    if (tabella === 'raccolti') S.aggiustaPiantine(S.get('raccolti', id), 1);
     S.db[tabella] = S.db[tabella].filter(function (x) {
       return x.id !== id;
     });

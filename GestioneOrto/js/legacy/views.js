@@ -371,7 +371,9 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             }
             return _context7.a(2, false);
           case 2:
+            S.aggiustaPiantine(r, 1);
             Object.assign(r, n);
+            S.aggiustaPiantine(r, -1);
             S.save();
             return _context7.a(2, true);
         }
